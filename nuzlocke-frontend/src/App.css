@@ -1,0 +1,23 @@
+/* Eine einfache Schriftart für das ganze Dokument */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f4f4f9; /* Ein sehr leichter, grauer Hintergrund */
+  color: #333;             /* Eine Standard-Schriftfarbe, die fast schwarz ist */
+  margin: 0;                /* Entfernt den Standard-Außenabstand */
+  display: flex;
+  justify-content: center;
+  padding-top: 4rem;
+}
+/* In App.css hinzufügen */
+.encounter-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ddd;
+  align-items: center;
+}
+.encounter-item.header {
+  font-weight: bold;
+  border-bottom: 2px solid #333;
+}

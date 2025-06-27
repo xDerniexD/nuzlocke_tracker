@@ -1,0 +1,15 @@
+{
+  "login": {
+    "title": "Anmelden",
+    "usernameLabel": "Benutzername",
+    "passwordLabel": "Passwort",
+    "button": "Einloggen",
+    "registerPrompt": "Noch kein Konto?",
+    "registerLink": "Hier registrieren",
+    "invalidCredentials": "Ungültige Anmeldedaten.",
+    "genericError": "Ein Fehler ist aufgetreten."
+  },
+  "navbar": {
+    "title": "Nuzlocke Tracker"
+  }
+}

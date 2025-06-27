@@ -1,0 +1,15 @@
+{
+  "login": {
+    "title": "Login",
+    "usernameLabel": "Username",
+    "passwordLabel": "Password",
+    "button": "Log In",
+    "registerPrompt": "Don't have an account?",
+    "registerLink": "Register here",
+    "invalidCredentials": "Invalid credentials.",
+    "genericError": "An error occurred."
+  },
+  "navbar": {
+    "title": "Nuzlocke Tracker"
+  }
+}

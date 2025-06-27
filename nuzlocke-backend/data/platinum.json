@@ -1,0 +1,1578 @@
+{
+  "_id": "platinum",
+  "name": {
+    "de": "Pokémon Platin",
+    "en": "Pokémon Platinum Version"
+  },
+  "generation": 4,
+  "locations": [
+    {
+      "name": {
+        "de": "Stärkegrotte",
+        "en": "Acuity Cavern"
+      },
+      "type": "cave",
+      "sequence": 50,
+      "hasStandardEncounter": true,
+      "staticEncounters": [
+        {
+          "pokemon": "Selfe",
+          "level": 50
+        }
+      ],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Stärkeufer",
+        "en": "Acuity Lakefront"
+      },
+      "type": "lake_front",
+      "sequence": 47,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Platz der Treue",
+        "en": "Amity Square"
+      },
+      "type": "forest",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Kampfarkaden",
+        "en": "Battle Arcade"
+      },
+      "type": "fight",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Kampfpalais",
+        "en": "Battle Castle"
+      },
+      "type": "fight",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Kampffabrik",
+        "en": "Battle Factory"
+      },
+      "type": "fight",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Kampfzone",
+        "en": "Battle Frontier"
+      },
+      "type": "fight",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Kampfsaal",
+        "en": "Battle Hall"
+      },
+      "type": "fight",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Duellpark",
+        "en": "Battle Park"
+      },
+      "type": "fight",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Duelltower",
+        "en": "Battle Tower"
+      },
+      "type": "fight",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Duellareal",
+        "en": "Battleground"
+      },
+      "type": "fight",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Café Frisch & Gesund",
+        "en": "Café"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Fleetburg",
+        "en": "Canalave City"
+      },
+      "type": "city",
+      "sequence": 43,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Fleetburg-Bibliothek",
+        "en": "Canalave Library"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Elyses",
+        "en": "Celestic Town"
+      },
+      "type": "city",
+      "sequence": 37,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Wettbewerbshalle",
+        "en": "Contest Hall"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Radl Rainers Radladen",
+        "en": "Cycle Shop"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Zerrwelt",
+        "en": "Distortion World"
+      },
+      "type": "etc",
+      "sequence": 49,
+      "hasStandardEncounter": true,
+      "staticEncounters": [
+        {
+          "pokemon": "Giratina",
+          "level": 47
+        }
+      ],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Ewigenau",
+        "en": "Eterna City"
+      },
+      "type": "city",
+      "sequence": 16,
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": [
+        {
+          "pokemon": "Togepi",
+          "level": 1,
+          "isEgg": true
+        }
+      ]
+    },
+    {
+      "name": {
+        "de": "Ewigwald",
+        "en": "Eterna Forest"
+      },
+      "type": "forest",
+      "sequence": 14,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Kampfareal",
+        "en": "Fight Area"
+      },
+      "type": "fight",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Auen von Flori",
+        "en": "Floaroma Meadow"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Flori",
+        "en": "Floaroma Town"
+      },
+      "type": "city",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Blumenparadies",
+        "en": "Flower Paradise"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [
+        {
+          "pokemon": "Shaymin",
+          "level": 30
+        }
+      ],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Blumenladen Blühende Pracht",
+        "en": "Flower Shop"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Dr. Footstep Haus",
+        "en": "Footstep House"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Fremdes Gebäude",
+        "en": "Foreign Building"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Feurio-Hütte",
+        "en": "Fuego Ironworks"
+      },
+      "type": "landmark",
+      "sequence": 41,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Vollmondinsel",
+        "en": "Fullmoon Island"
+      },
+      "type": "etc",
+      "hasStandardEncounter": false,
+      "staticEncounters": [
+        {
+          "pokemon": "Cresselia",
+          "level": 50
+        }
+      ],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Galaktik-Gebäude von Schleiede",
+        "en": "Galactic HQ"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Schleiede Spielhalle",
+        "en": "Game Corner"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Globale Wundertausch-Station",
+        "en": "Global Terminal"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Hotel Prachtsee",
+        "en": "Grand Lake"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Großmoor",
+        "en": "Great Marsh"
+      },
+      "type": "forest",
+      "sequence": 31,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Halle des Beginns",
+        "en": "Hall of Origin"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [
+        {
+          "pokemon": "Arceus",
+          "level": 80
+        }
+      ],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Herzhofen",
+        "en": "Hearthome City"
+      },
+      "type": "city",
+      "sequence": 21,
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": [
+        {
+          "pokemon": "Evoli",
+          "level": 20,
+          "isEgg": false
+        }
+      ]
+    },
+    {
+      "name": {
+        "de": "Eisberg-Ruinen",
+        "en": "Iceberg Ruins"
+      },
+      "type": "cave",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Eisen-Ruinen",
+        "en": "Iron Ruins"
+      },
+      "type": "cave",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Eiseninsel",
+        "en": "Iron island"
+      },
+      "type": "route",
+      "sequence": 44,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Jubelstadt",
+        "en": "Jubilife City"
+      },
+      "type": "city",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Jubelstadt TV",
+        "en": "Jubilife TV"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "See der Stärke",
+        "en": "Lake Acuity"
+      },
+      "type": "lake_front",
+      "sequence": 48,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "See der Kühnheit",
+        "en": "Lake Valor"
+      },
+      "type": "lake_front",
+      "sequence": 34,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "See der Wahrheit",
+        "en": "Lake Verity"
+      },
+      "type": "lake_front",
+      "sequence": 4,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Turm der Ruhenden",
+        "en": "Lost Tower"
+      },
+      "type": "landmark",
+      "sequence": 23,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Maniac-Tunnel",
+        "en": "Maniac Tunnel"
+      },
+      "type": "cave",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Bergbaumuseum",
+        "en": "Mining Museum"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Kraterberg",
+        "en": "Mt. Coronet"
+      },
+      "type": "cave",
+      "sequence": 19,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Neumondinsel",
+        "en": "Newmoon Island"
+      },
+      "type": "etc",
+      "hasStandardEncounter": false,
+      "staticEncounters": [
+        {
+          "pokemon": "Darkrai",
+          "level": 50
+        }
+      ],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Alte Villa",
+        "en": "Old Chateau"
+      },
+      "type": "landmark",
+      "sequence": 15,
+      "hasStandardEncounter": true,
+      "staticEncounters": [
+        {
+          "pokemon": "Rotom",
+          "level": 20
+        }
+      ],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Erzelingen",
+        "en": "Oreburgh City"
+      },
+      "type": "city",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Erzelingen-Tor",
+        "en": "Oreburgh Gate"
+      },
+      "type": "cave",
+      "sequence": 7,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Erzelingen-Mine",
+        "en": "Oreburgh Mine"
+      },
+      "type": "cave",
+      "sequence": 8,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Park der Freunde",
+        "en": "Pal Park"
+      },
+      "type": "forest",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Weideburg",
+        "en": "Pastoria City"
+      },
+      "type": "city",
+      "sequence": 30,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Knursperei",
+        "en": "Poffin House"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Pokémon-Hort",
+        "en": "Pokémon Day Care"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Pokémon Liga",
+        "en": "Pokémon League"
+      },
+      "type": "city",
+      "sequence": 55,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Pokétech-Gesellschaft",
+        "en": "Pokétch Co."
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Verwüsteter Pfad",
+        "en": "Ravaged Path"
+      },
+      "type": "cave",
+      "sequence": 11,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Erholungsareal",
+        "en": "Resort Area"
+      },
+      "type": "fight",
+      "sequence": 60,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "7-Sterne-Restaurant",
+        "en": "Restaurant"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Gipfelruinen",
+        "en": "Rock Peak Ruins"
+      },
+      "type": "cave",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Raum von Rotom",
+        "en": "ROTOM's Room"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 201",
+        "en": "Route 201"
+      },
+      "type": "route",
+      "sequence": 3,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 202",
+        "en": "Route 202"
+      },
+      "type": "route",
+      "sequence": 5,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 203",
+        "en": "Route 203"
+      },
+      "type": "route",
+      "sequence": 6,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 204",
+        "en": "Route 204"
+      },
+      "type": "route",
+      "sequence": 10,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 205",
+        "en": "Route 205"
+      },
+      "type": "route",
+      "sequence": 12,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 206",
+        "en": "Route 206"
+      },
+      "type": "route",
+      "sequence": 18,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 207",
+        "en": "Route 207"
+      },
+      "type": "route",
+      "sequence": 9,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 208",
+        "en": "Route 208"
+      },
+      "type": "route",
+      "sequence": 20,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 209",
+        "en": "Route 209"
+      },
+      "type": "route",
+      "sequence": 22,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 210",
+        "en": "Route 210"
+      },
+      "type": "route",
+      "sequence": 25,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 211",
+        "en": "Route 211"
+      },
+      "type": "route",
+      "sequence": 17,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 212",
+        "en": "Route 212"
+      },
+      "type": "route",
+      "sequence": 28,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 213",
+        "en": "Route 213"
+      },
+      "type": "route",
+      "sequence": 32,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 214",
+        "en": "Route 214"
+      },
+      "type": "route",
+      "sequence": 35,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 215",
+        "en": "Route 215"
+      },
+      "type": "route",
+      "sequence": 26,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 216",
+        "en": "Route 216"
+      },
+      "type": "route",
+      "sequence": 45,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 217",
+        "en": "Route 217"
+      },
+      "type": "route",
+      "sequence": 46,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 218",
+        "en": "Route 218"
+      },
+      "type": "route",
+      "sequence": 42,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 219",
+        "en": "Route 219"
+      },
+      "type": "route",
+      "sequence": 38,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 221",
+        "en": "Route 221"
+      },
+      "type": "route",
+      "sequence": 40,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 222",
+        "en": "Route 222"
+      },
+      "type": "route",
+      "sequence": 52,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 224",
+        "en": "Route 224"
+      },
+      "type": "route",
+      "sequence": 57,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 225",
+        "en": "Route 225"
+      },
+      "type": "route",
+      "sequence": 65,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 227",
+        "en": "Route 227"
+      },
+      "type": "route",
+      "sequence": 63,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 228",
+        "en": "Route 228"
+      },
+      "type": "route",
+      "sequence": 61,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 229",
+        "en": "Route 229"
+      },
+      "type": "route",
+      "sequence": 59,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Maniac-Höhle",
+        "en": "Ruin Maniac Cave"
+      },
+      "type": "cave",
+      "sequence": 36,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Sandgemme",
+        "en": "Sandgem Town"
+      },
+      "type": "city",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 220",
+        "en": "Sea Route 220"
+      },
+      "type": "route",
+      "sequence": 39,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 223",
+        "en": "Sea Route 223"
+      },
+      "type": "route",
+      "sequence": 54,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 226",
+        "en": "Sea Route 226"
+      },
+      "type": "route",
+      "sequence": 62,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Route 230",
+        "en": "Sea Route 230"
+      },
+      "type": "route",
+      "sequence": 58,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Scheidequelle",
+        "en": "Sendoff Spring"
+      },
+      "type": "lake_front",
+      "sequence": 66,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Blizzach",
+        "en": "Snowpoint City"
+      },
+      "type": "city",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Blizzach-Tempel",
+        "en": "Snowpoint Temple"
+      },
+      "type": "landmark",
+      "sequence": 68,
+      "hasStandardEncounter": true,
+      "staticEncounters": [
+        {
+          "pokemon": "Regigigas",
+          "level": 1
+        }
+      ],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Trostu-Ruinen",
+        "en": "Solaceon Ruins"
+      },
+      "type": "landmark",
+      "sequence": 24,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Trostu",
+        "en": "Solaceon Town"
+      },
+      "type": "city",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Speersäule",
+        "en": "Spear Pillar"
+      },
+      "type": "etc",
+      "hasStandardEncounter": true,
+      "staticEncounters": [
+        {
+          "pokemon": "Dialga",
+          "level": 70
+        },
+        {
+          "pokemon": "Palkia",
+          "level": 70
+        }
+      ],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Quellenpfad",
+        "en": "Spring Path"
+      },
+      "type": "route",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Kahlberg",
+        "en": "Stark Mountain"
+      },
+      "type": "cave",
+      "sequence": 64,
+      "hasStandardEncounter": true,
+      "staticEncounters": [
+        {
+          "pokemon": "Heatran",
+          "level": 50
+        }
+      ],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Sonnewik",
+        "en": "Sunyshore City"
+      },
+      "type": "city",
+      "sequence": 53,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Sonnewik-Markt",
+        "en": "Sunyshore Market"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Überlebensareal",
+        "en": "Survival Area"
+      },
+      "type": "fight",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Galaktik-Gebäude von Ewigenau",
+        "en": "T.G. Eterna Bldg"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Trainerschule",
+        "en": "Trainers’ School"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Trophäengarten",
+        "en": "Trophy Garden"
+      },
+      "type": "etc",
+      "sequence": 29,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Höhle der Umkehr",
+        "en": "Turnback Cave"
+      },
+      "type": "cave",
+      "sequence": 67,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Zweiblattdorf",
+        "en": "Twinleaf Town"
+      },
+      "type": "city",
+      "sequence": 2,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Starterwahl",
+        "en": "Choise of Starter"
+      },
+      "type": "etc",
+      "sequence": 1,
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": [
+        {
+          "pokemon": "Chelast",
+          "level": 5
+        },
+        {
+          "pokemon": "Panflam",
+          "level": 5
+        },
+        {
+          "pokemon": "Plinfla",
+          "level": 5
+        }
+      ]
+    },
+    {
+      "name": {
+        "de": "Windkraftwerk",
+        "en": "Valley Windworks"
+      },
+      "type": "landmark",
+      "sequence": 13,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Kühnheitsgrotte",
+        "en": "Valor Cavern"
+      },
+      "type": "cave",
+      "sequence": 51,
+      "hasStandardEncounter": true,
+      "staticEncounters": [
+        {
+          "pokemon": "Tobutz",
+          "level": 50
+        }
+      ],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Kühnheitsufer",
+        "en": "Valor Lakefront"
+      },
+      "type": "lake_front",
+      "sequence": 33,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Schleiede",
+        "en": "Veilstone City"
+      },
+      "type": "city",
+      "sequence": 27,
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": [
+        {
+          "pokemon": "Porygon",
+          "level": 25,
+          "isEgg": false
+        }
+      ]
+    },
+    {
+      "name": {
+        "de": "Schleiede-Kaufhaus",
+        "en": "Veilstone Store"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Wahrheitsgrotte",
+        "en": "Verity Cavern"
+      },
+      "type": "cave",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Wahrheitsufer",
+        "en": "Verity Lakefront"
+      },
+      "type": "lake_front",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Siegesstraße",
+        "en": "Victory Road"
+      },
+      "type": "cave",
+      "sequence": 56,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Villa",
+        "en": "Villa"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Leuchtturm",
+        "en": "Vista Lighthouse"
+      },
+      "type": "landmark",
+      "hasStandardEncounter": false,
+      "staticEncounters": [],
+      "giftPokemon": []
+    },
+    {
+      "name": {
+        "de": "Bizarre Höhle",
+        "en": "Wayward Cave"
+      },
+      "type": "cave",
+      "sequence": 18,
+      "hasStandardEncounter": true,
+      "staticEncounters": [],
+      "giftPokemon": []
+    }
+  ],
+  "events": [
+    {
+      "name": {
+        "de": "Arena von Erzelingen",
+        "en": "Oreburgh Gym"
+      },
+      "type": "gym",
+      "sequence": 8.1,
+      "levelCap": 14,
+      "badge": {
+        "de": "Kohlorden",
+        "en": "Coal Badge"
+      },
+      "badgeImage": "coal-badge.png"
+    },
+    {
+      "name": {
+        "de": "Arena von Ewigenau",
+        "en": "Eterna Gym"
+      },
+      "type": "gym",
+      "sequence": 14.1,
+      "levelCap": 22,
+      "badge": {
+        "de": "Waldorden",
+        "en": "Forest Badge"
+      },
+      "badgeImage": "forest-badge.png"
+    },
+    {
+      "name": {
+        "de": "Arena von Schleiede",
+        "en": "Veilstone Gym"
+      },
+      "type": "gym",
+      "sequence": 26.1,
+      "levelCap": 32,
+      "badge": {
+        "de": "Bergorden",
+        "en": "Cobble Badge"
+      },
+      "badgeImage": "cobble-badge.png"
+    },
+    {
+      "name": {
+        "de": "Arena von Weideburg",
+        "en": "Pastoria Gym"
+      },
+      "type": "gym",
+      "sequence": 29.1,
+      "levelCap": 37,
+      "badge": {
+        "de": "Fennorden",
+        "en": "Fen Badge"
+      },
+      "badgeImage": "fen-badge.png"
+    },
+    {
+      "name": {
+        "de": "Arena von Herzhofen",
+        "en": "Hearthome Gym"
+      },
+      "type": "gym",
+      "sequence": 20.1,
+      "levelCap": 26,
+      "badge": {
+        "de": "Reliktorden",
+        "en": "Relic Badge"
+      },
+      "badgeImage": "relic-badge.png"
+    },
+    {
+      "name": {
+        "de": "Arena von Fleetburg",
+        "en": "Canalave Gym"
+      },
+      "type": "gym",
+      "sequence": 42.1,
+      "levelCap": 41,
+      "badge": {
+        "de": "Minenorden",
+        "en": "Mine Badge"
+      },
+      "badgeImage": "mine-badge.png"
+    },
+    {
+      "name": {
+        "de": "Arena von Blizzach",
+        "en": "Snowpoint Gym"
+      },
+      "type": "gym",
+      "sequence": 48.1,
+      "levelCap": 44,
+      "badge": {
+        "de": "Firnorden",
+        "en": "Icicle Badge"
+      },
+      "badgeImage": "icicle-badge.png"
+    },
+    {
+      "name": {
+        "de": "Arena von Sonnewik",
+        "en": "Sunyshore Gym"
+      },
+      "type": "gym",
+      "sequence": 52.1,
+      "levelCap": 50,
+      "badge": {
+        "de": "Lichtorden",
+        "en": "Beacon Badge"
+      },
+      "badgeImage": "beacon-badge.png"
+    },
+    {
+      "name": {
+        "de": "Top Vier Herbaro",
+        "en": "Elite Four Aaron"
+      },
+      "type": "elite-four",
+      "sequence": 54.1,
+      "levelCap": 53
+    },
+    {
+      "name": {
+        "de": "Top Vier Teresa",
+        "en": "Elite Four Bertha"
+      },
+      "type": "elite-four",
+      "sequence": 54.2,
+      "levelCap": 55
+    },
+    {
+      "name": {
+        "de": "Top Vier Ignaz",
+        "en": "Elite Four Flint"
+      },
+      "type": "elite-four",
+      "sequence": 54.3,
+      "levelCap": 57
+    },
+    {
+      "name": {
+        "de": "Top Vier Lucian",
+        "en": "Elite Four Lucian"
+      },
+      "type": "elite-four",
+      "sequence": 54.4,
+      "levelCap": 59
+    },
+    {
+      "name": {
+        "de": "Champion Cynthia",
+        "en": "Champion Cynthia"
+      },
+      "type": "champion",
+      "sequence": 54.5,
+      "levelCap": 62
+    }
+  ],
+  "trainers": [
+    {
+      "name": "Rivale Barry - Route 203",
+      "sequence": 4.5,
+      "team": [
+        { "name": "Staralili", "level": 9 },
+        { "name": "Panflam", "level": 11 }
+      ]
+    }
+  ]
+}
