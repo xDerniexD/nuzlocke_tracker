@@ -23,13 +23,15 @@ router.post('/', protect, async (req, res) => {
 
     const encounterItems = validEncounterLocations.map(loc => ({
       isEncounter: true,
-      locationName: loc.name.de || loc.name.en,
+      locationName_de: loc.name.de,
+      locationName_en: loc.name.en,
       sequence: loc.sequence,
     }));
 
     const eventItems = (gameData.events || []).map(evt => ({
       isEvent: true,
-      locationName: evt.name.de || evt.name.en,
+      locationName_de: evt.name.de,
+      locationName_en: evt.name.en,
       levelCap: evt.levelCap,
       badgeImage: evt.badgeImage,
       sequence: evt.sequence || 999
@@ -148,7 +150,7 @@ router.put('/:id', protect, async (req, res) => {
   }
 });
 
-// WIEDERHERGESTELLT: PUT /api/nuzlockes/:id/rules - Regeln für einen Run aktualisieren
+// PUT /api/nuzlockes/:id/rules - Regeln für einen Run aktualisieren
 router.put('/:id/rules', protect, async (req, res) => {
   try {
     const { rules } = req.body;

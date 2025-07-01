@@ -11,5 +11,97 @@
   },
   "navbar": {
     "title": "Nuzlocke Tracker"
+  },
+    "stats": {
+    "hp": "HP",
+    "attack": "Attack",
+    "defense": "Defense",
+    "special-attack": "Sp. Atk",
+    "special-defense": "Sp. Def",
+    "speed": "Speed",
+    "atk": "Attack",
+    "def": "Defense",
+    "spa": "Sp. Atk",
+    "spd": "Sp. Def",
+    "spe": "Speed",
+    "total": "Total"
+  },
+  "modal": {
+    "base_stats": "Base Stats",
+    "abilities": "Abilities",
+    "hidden_ability_tag": "(Hidden)",
+    "learnable_moves": "Learnable Moves",
+    "level": "Level",
+    "move": "Move",
+    "tm_hm": "TM/HM",
+    "unknown_move": "Unknown Move",
+    "loading_error": "Pokémon data could not be loaded.",
+    "close_button": "Close"
+  },
+  "methods": {
+    "level-up": "By Level-Up",
+    "machine": "By TM/HM",
+    "tutor": "By Move Tutor"
+  },
+  "tracker": {
+    "dashboard_button": "Dashboard",
+    "rules_button": "Rules",
+    "view_button": "Settings",
+    "sort_by": "Sort by:",
+    "filter_by": "Filter by:",
+    "location_header": "Location",
+    "pokemon_header": "Pokémon",
+    "nickname_header": "Nickname",
+    "status_header": "Status",
+    "sort_default": "Default",
+    "sort_alpha": "Alphabetical (A-Z)",
+    "filter_pending": "Pending",
+    "filter_caught": "Caught",
+    "filter_gift": "Gift",
+    "filter_fainted": "Fainted",
+    "filter_missed": "Missed",
+    "level_cap": "Level Cap",
+    "saving_status": "Saving...",
+    "unsaved_status": "Unsaved changes",
+    "saved_status": "Saved"
+  },
+  "rules": {
+    "modal_title": "Edit Rule Set",
+    "dupes_clause": "Dupes Clause",
+    "shiny_clause": "Shiny Clause",
+    "custom_rules_label": "Custom Rules:",
+    "custom_rules_placeholder": "Enter your custom rules here...",
+    "close_button": "Close",
+    "save_button": "Save"
+  },
+  "settings": {
+    "show_columns_title": "Show Columns",
+    "nickname_column": "Nickname Column"
+  },
+  "dashboard": {
+    "welcome": "Welcome, {{username}}!",
+    "logout_button": "Logout",
+    "loading_runs": "Loading runs...",
+    "new_run_header": "Start New Run",
+    "run_name_placeholder": "Name of the run",
+    "game_platinum": "Pokémon Platinum",
+    "run_type_solo": "Solo",
+    "run_type_soullink": "Soullink",
+    "start_button": "Start Run",
+    "join_soullink_header": "Join Soullink",
+    "join_placeholder": "Enter Invite Code",
+    "join_button": "Join",
+    "your_runs_header": "Your Nuzlocke Runs",
+    "archived_runs_header": "Archived Runs",
+    "show_archived_label": "Show Archive",
+    "no_active_runs": "You have no active runs.",
+    "no_archived_runs": "You have no archived runs.",
+    "restore_run_aria": "Restore Run",
+    "archive_run_aria": "Archive Run",
+    "delete_run_aria": "Delete Run",
+    "delete_run_title": "Delete Run",
+    "delete_run_body": "Are you sure? This action cannot be undone.",
+    "cancel_button": "Cancel",
+    "delete_button": "Delete"
   }
 }

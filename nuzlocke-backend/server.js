@@ -12,9 +12,9 @@ const bcrypt = require('bcryptjs');
 
 // Importiere die Models und Middleware
 const User = require('./models/User');
-const Pokemon = require('./models/Pokemon'); // NEU: Importiere das Pokemon-Modell
 const { protect } = require('./middleware/authMiddleware');
 const nuzlockeRoutes = require('./routes/nuzlockeRoutes');
+const pokemonRoutes = require('./routes/pokemonRoutes'); // NEU
 
 const app = express();
 const PORT = 3000;
@@ -54,34 +54,8 @@ mongoose.connect(dbURI)
 
 // --- API-Endpunkte ---
 
-// NEU: Such-Endpunkt, der die Datenbank abfragt
-app.get('/api/pokemon/search', async (req, res) => {
-    try {
-        const query = req.query.q || '';
-        if (query.length < 2) {
-            return res.json([]);
-        }
+// Die Pokémon-Routen wurden entfernt und in eine eigene Datei ausgelagert.
 
-        // Erstelle einen case-insensitive Regex für die Suche
-        const searchRegex = new RegExp(query, 'i');
-
-        const results = await Pokemon.find({
-            $or: [
-                { name_de: searchRegex },
-                { name_en: searchRegex }
-            ]
-        }).limit(15); // Limitiere die Ergebnisse
-
-        res.json(results);
-
-    } catch (error) {
-        res.status(500).json({ message: "Fehler bei der Pokémon-Suche." });
-    }
-});
-
-// Der alte /api/pokedex Endpunkt wird nicht mehr benötigt und kann gelöscht werden.
-
-// ... (der Rest deiner server.js bleibt unverändert)
 app.get('/api/games/platinum', (req, res) => {
   const filePath = path.join(__dirname, 'data', 'platinum.json');
   try {
@@ -140,4 +114,6 @@ app.get('/api/users/profile', protect, (req, res) => {
 
 
 app.set('socketio', io);
+// Verwendung der ausgelagerten Routen
+app.use('/api/pokemon', pokemonRoutes); // NEU
 app.use('/api/nuzlockes', nuzlockeRoutes);

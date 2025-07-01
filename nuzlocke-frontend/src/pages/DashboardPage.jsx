@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // Importieren
 import api from '../api/api';
 import {
   Box, Button, Divider, Flex, Heading, Input, Select, Text,
@@ -20,6 +21,7 @@ import {
 import { MdPlayArrow, MdPeople, MdDelete, MdArchive, MdUnarchive } from 'react-icons/md';
 
 function DashboardPage({ user, onLogout }) {
+  const { t } = useTranslation(); // Hook verwenden
   const [runs, setRuns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,14 +33,11 @@ function DashboardPage({ user, onLogout }) {
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
 
-  // Logik für den Löschen-Dialog
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const cancelRef = useRef();
   const [runToDelete, setRunToDelete] = useState(null);
   
-  // State, um den Filter für archivierte Runs zu steuern
   const [showArchived, setShowArchived] = useState(false);
-
 
   useEffect(() => {
     const fetchNuzlockes = async () => {
@@ -149,12 +148,11 @@ function DashboardPage({ user, onLogout }) {
   const archivedRuns = runs.filter(run => run.isArchived);
   const runsToDisplay = showArchived ? archivedRuns : activeRuns;
 
-
   if (loading) {
     return (
       <Flex justify="center" align="center" height="200px">
         <Spinner size="xl" />
-        <Text ml={4}>Lade Spielstände...</Text>
+        <Text ml={4}>{t('dashboard.loading_runs')}</Text>
       </Flex>
     );
   }
@@ -162,44 +160,44 @@ function DashboardPage({ user, onLogout }) {
   return (
     <Box maxW="container.lg" mx="auto" p={5}>
       <Flex justifyContent="space-between" alignItems="center" mb={6}>
-        <Heading as="h1" size="lg">Willkommen, {user.username}!</Heading>
-        <Button onClick={onLogout} colorScheme="gray">Ausloggen</Button>
+        <Heading as="h1" size="lg">{t('dashboard.welcome', { username: user.username })}</Heading>
+        <Button onClick={onLogout} colorScheme="gray">{t('dashboard.logout_button')}</Button>
       </Flex>
       
       <Flex direction={{ base: 'column', md: 'row' }} gap={10}>
         <Box flex={1} p={6} borderWidth={1} borderRadius="lg">
-          <Heading as="h2" size="md" mb={4}>Neuen Run starten</Heading>
+          <Heading as="h2" size="md" mb={4}>{t('dashboard.new_run_header')}</Heading>
           <form onSubmit={handleCreateRun}>
             <VStack spacing={4}>
               <Input
-                placeholder="Name des Runs"
+                placeholder={t('dashboard.run_name_placeholder')}
                 value={newRunName}
                 onChange={(e) => setNewRunName(e.target.value)}
               />
               <Select value={selectedGame} onChange={(e) => setSelectedGame(e.target.value)}>
-                <option value="platinum">Pokémon Platin</option>
+                <option value="platinum">{t('dashboard.game_platinum')}</option>
               </Select>
               <RadioGroup onChange={setRunType} value={runType}>
                 <HStack>
-                  <Radio value="solo">Solo</Radio>
-                  <Radio value="soullink">Soullink</Radio>
+                  <Radio value="solo">{t('dashboard.run_type_solo')}</Radio>
+                  <Radio value="soullink">{t('dashboard.run_type_soullink')}</Radio>
                 </HStack>
               </RadioGroup>
-              <Button type="submit" colorScheme="teal" width="full" isLoading={isCreating}>Run starten</Button>
+              <Button type="submit" colorScheme="teal" width="full" isLoading={isCreating}>{t('dashboard.start_button')}</Button>
             </VStack>
           </form>
         </Box>
 
         <Box flex={1} p={6} borderWidth={1} borderRadius="lg">
-          <Heading as="h2" size="md" mb={4}>Soullink beitreten</Heading>
+          <Heading as="h2" size="md" mb={4}>{t('dashboard.join_soullink_header')}</Heading>
            <form onSubmit={handleJoinRun}>
              <VStack spacing={4}>
                 <Input
-                  placeholder="Invite Code eingeben"
+                  placeholder={t('dashboard.join_placeholder')}
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value)}
                 />
-                <Button type="submit" colorScheme="purple" width="full" isLoading={isJoining}>Beitreten</Button>
+                <Button type="submit" colorScheme="purple" width="full" isLoading={isJoining}>{t('dashboard.join_button')}</Button>
              </VStack>
            </form>
         </Box>
@@ -210,18 +208,18 @@ function DashboardPage({ user, onLogout }) {
       <Box as="section">
         <Flex justifyContent="space-between" alignItems="center" mb={4}>
           <Heading as="h2" size="md">
-            {showArchived ? 'Archivierte Runs' : 'Deine Nuzlocke-Runs'}
+            {showArchived ? t('dashboard.archived_runs_header') : t('dashboard.your_runs_header')}
           </Heading>
           <ChakraFormControl display="flex" alignItems="center">
             <FormLabel htmlFor="show-archive" mb="0">
-              Archiv anzeigen
+              {t('dashboard.show_archived_label')}
             </FormLabel>
             <Switch id="show-archive" isChecked={showArchived} onChange={() => setShowArchived(!showArchived)} />
           </ChakraFormControl>
         </Flex>
 
         {runsToDisplay.length === 0 && !error ? (
-          <Text>Du hast keine {showArchived ? 'archivierten' : 'aktiven'} Runs.</Text>
+          <Text>{showArchived ? t('dashboard.no_archived_runs') : t('dashboard.no_active_runs')}</Text>
         ) : (
           <List spacing={3}>
             {runsToDisplay.map(run => (
@@ -235,13 +233,13 @@ function DashboardPage({ user, onLogout }) {
                 </Link>
                 <HStack>
                   <IconButton
-                    aria-label={run.isArchived ? "Run wiederherstellen" : "Run archivieren"}
+                    aria-label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')}
                     icon={run.isArchived ? <MdUnarchive /> : <MdArchive />}
                     variant="ghost"
                     onClick={() => handleToggleArchive(run._id)}
                   />
                   <IconButton
-                    aria-label="Run löschen"
+                    aria-label={t('dashboard.delete_run_aria')}
                     icon={<MdDelete />}
                     colorScheme="red"
                     variant="ghost"
@@ -254,7 +252,6 @@ function DashboardPage({ user, onLogout }) {
         )}
       </Box>
 
-      {/* Der Bestätigungsdialog für's Löschen */}
       <AlertDialog
         isOpen={isDeleteOpen}
         leastDestructiveRef={cancelRef}
@@ -263,17 +260,17 @@ function DashboardPage({ user, onLogout }) {
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Run löschen
+              {t('dashboard.delete_run_title')}
             </AlertDialogHeader>
             <AlertDialogBody>
-              Bist du sicher? Diese Aktion kann nicht rückgängig gemacht werden.
+              {t('dashboard.delete_run_body')}
             </AlertDialogBody>
             <AlertDialogFooter>
               <Button ref={cancelRef} onClick={onDeleteClose}>
-                Abbrechen
+                {t('dashboard.cancel_button')}
               </Button>
               <Button colorScheme="red" onClick={confirmDelete} ml={3}>
-                Löschen
+                {t('dashboard.delete_button')}
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>

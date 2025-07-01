@@ -1,67 +1,120 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../api/api';
 import PokemonSprite from '../components/PokemonSprite';
 import AutocompleteInput from '../components/AutocompleteInput';
 import StatusButtonGroup from '../components/StatusButtonGroup';
 import TypeIcons from '../components/TypeIcons';
+import PokemonDetailModal from '../components/PokemonDetailModal';
 import {
   Box, Button, Container, Flex, Heading, Spinner, Alert,
   AlertIcon, Grid, Text, Input, Select, useToast, Tag, HStack,
   CheckboxGroup, Checkbox, Stack, Divider, Icon, Image,
   VStack, StackDivider, useDisclosure,
-  // Wieder hinzugefügte Komponenten für das Modal
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter,
-  ModalBody, ModalCloseButton, FormControl, FormLabel, Textarea
+  ModalBody, ModalCloseButton, FormControl, FormLabel, Textarea,
+  Menu, MenuButton, MenuList, MenuItemOption, MenuOptionGroup
 } from '@chakra-ui/react';
 import { ArrowBackIcon, CheckCircleIcon, TimeIcon } from '@chakra-ui/icons';
-import { FaShieldAlt, FaBook } from 'react-icons/fa'; // Wieder hinzugefügtes Icon für Regeln
-
-const filterOptions = [
-  { value: 'pending', label: 'Unbesucht' },
-  { value: 'caught', label: 'Gefangen' },
-  { value: 'gift', label: 'Geschenk' },
-  { value: 'fainted', label: 'Besiegt' },
-  { value: 'missed', label: 'Verpasst' },
-];
+import { FaShieldAlt, FaBook, FaCog } from 'react-icons/fa';
+import io from 'socket.io-client';
 
 function TrackerPage() {
   const { id } = useParams();
+  const { i18n, t } = useTranslation();
+
   const [run, setRun] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saveStatus, setSaveStatus] = useState('saved');
+  const [lastSavedRun, setLastSavedRun] = useState(null);
   const toast = useToast();
   const debounceTimeout = useRef(null);
 
-  // Wieder hinzugefügte Logik für das Regel-Modal
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isRulesOpen, onOpen: onRulesOpen, onClose: onRulesClose } = useDisclosure();
+  const { isOpen: isDetailOpen, onOpen: onDetailOpen, onClose: onDetailClose } = useDisclosure();
+
   const [rules, setRules] = useState({ dupesClause: true, shinyClause: true, customRules: '' });
+  const [viewSettings, setViewSettings] = useState({ showNicknames: true });
+  
+  const [selectedPokemonDetails, setSelectedPokemonDetails] = useState(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
 
   const [sortBy, setSortBy] = useState('default');
-  const [filterBy, setFilterBy] = useState(filterOptions.map(f => f.value)); 
+  
+  const filterOptions = useMemo(() => [
+    { value: 'pending', label: t('tracker.filter_pending') },
+    { value: 'caught', label: t('tracker.filter_caught') },
+    { value: 'gift', label: t('tracker.filter_gift') },
+    { value: 'fainted', label: t('tracker.filter_fainted') },
+    { value: 'missed', label: t('tracker.filter_missed') },
+  ], [t]);
+
+  const [filterBy, setFilterBy] = useState(filterOptions.map(f => f.value));
   const [displayedEncounters, setDisplayedEncounters] = useState([]);
 
-  const caughtPokemonIds = useMemo(() => {
+  const player1CaughtChains = useMemo(() => {
     if (!run) return [];
-    const ids = new Set();
+    const chains = new Set();
     run.encounters.forEach(enc => {
-      if ((enc.status1 === 'caught' || enc.status1 === 'gift') && enc.pokemonId1) {
-        ids.add(enc.pokemonId1);
-      }
-      if ((enc.status2 === 'caught' || enc.status2 === 'gift') && enc.pokemonId2) {
-        ids.add(enc.pokemonId2);
+      if ((enc.status1 === 'caught' || enc.status1 === 'gift') && enc.evolutionChainId1) {
+        chains.add(enc.evolutionChainId1);
       }
     });
-    return Array.from(ids);
+    return Array.from(chains);
   }, [run]);
+
+  const player2CaughtChains = useMemo(() => {
+    if (!run || run.type !== 'soullink') return [];
+    const chains = new Set();
+    run.encounters.forEach(enc => {
+      if ((enc.status2 === 'caught' || enc.status2 === 'gift') && enc.evolutionChainId2) {
+        chains.add(enc.evolutionChainId2);
+      }
+    });
+    return Array.from(chains);
+  }, [run]);
+
+  const gridTemplateColumns = useMemo(() => {
+    if (!run) return '';
+    const columns = ['2fr', '70px', '1.5fr'];
+    if (viewSettings.showNicknames) { columns.push('1.5fr'); }
+    columns.push('1.5fr');
+
+    if (run.type === 'soullink') {
+      columns.push('70px', '1.5fr');
+      if (viewSettings.showNicknames) { columns.push('1.5fr'); }
+      columns.push('1.5fr');
+    }
+    return columns.join(' ');
+  }, [run?.type, viewSettings.showNicknames]);
+
+  useEffect(() => {
+    const socket = io('http://localhost:3000');
+    socket.on('connect', () => {
+      socket.emit('joinRoom', id);
+    });
+    socket.on('nuzlocke:updated', (updatedRunData) => {
+      setSaveStatus('saved');
+      setRun(updatedRunData);
+      setLastSavedRun(updatedRunData);
+      toast({
+        title: "Run wurde von einem Partner aktualisiert.", status: "info",
+        duration: 3000, isClosable: true, position: "top-right"
+      });
+    });
+    return () => {
+      socket.disconnect();
+    };
+  }, [id, toast]);
 
   useEffect(() => {
     const loadInitialData = async () => {
       try {
         const response = await api.get(`/nuzlockes/${id}`);
         setRun(response.data);
-        // Setze die initialen Regeln für das Modal
+        setLastSavedRun(response.data);
         if (response.data.rules) {
           setRules(response.data.rules);
         }
@@ -88,12 +141,16 @@ function TrackerPage() {
       processedEncounters = processedEncounters.filter(encounter => encounter.isEvent);
     }
     if (sortBy === 'alpha') {
-      processedEncounters.sort((a, b) => a.locationName.localeCompare(b.locationName));
+      processedEncounters.sort((a, b) => {
+        const nameA = i18n.language === 'de' ? a.locationName_de : a.locationName_en;
+        const nameB = i18n.language === 'de' ? b.locationName_de : b.locationName_en;
+        return nameA.localeCompare(nameB);
+      });
     } else if (sortBy === 'default') {
       processedEncounters.sort((a, b) => (a.sequence || 999) - (b.sequence || 999));
     }
     setDisplayedEncounters(processedEncounters);
-  }, [run, sortBy, filterBy]);
+  }, [run, sortBy, filterBy, i18n.language]);
 
   const handleUpdateRun = useCallback(async () => {
     if (!run) return;
@@ -101,6 +158,7 @@ function TrackerPage() {
     try {
       await api.put(`/nuzlockes/${id}`, { encounters: run.encounters });
       setSaveStatus('saved');
+      setLastSavedRun(run);
     } catch (err) {
       toast({ title: "Fehler beim Speichern.", status: "error", duration: 3000, isClosable: true });
       setSaveStatus('saved');
@@ -108,52 +166,79 @@ function TrackerPage() {
   }, [run, id, toast]);
 
   useEffect(() => {
-    if (loading || !run) return;
-    setSaveStatus('typing');
-    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-    debounceTimeout.current = setTimeout(() => {
-      handleUpdateRun();
-    }, 1500);
-    return () => clearTimeout(debounceTimeout.current);
-  }, [run, loading, handleUpdateRun]);
+    if (loading || !run || !lastSavedRun) return;
+    if (JSON.stringify(run) !== JSON.stringify(lastSavedRun)) {
+      setSaveStatus('typing');
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+      debounceTimeout.current = setTimeout(() => {
+        handleUpdateRun();
+      }, 1500);
+    }
+    return () => {
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    };
+  }, [run, lastSavedRun, loading, handleUpdateRun]);
 
   const handleFieldChange = (index, field, value) => {
     const originalIndex = run.encounters.findIndex(e => e._id === displayedEncounters[index]?._id);
     if (originalIndex === -1) return;
-    const updatedEncounters = [...run.encounters];
-    updatedEncounters[originalIndex][field] = value;
+    const updatedEncounters = run.encounters.map((encounter, idx) => {
+      if (idx === originalIndex) {
+        return { ...encounter, [field]: value };
+      }
+      return encounter;
+    });
     setRun({ ...run, encounters: updatedEncounters });
   };
 
   const handlePokemonSelect = (index, player, selectedPokemon) => {
     const originalIndex = run.encounters.findIndex(e => e._id === displayedEncounters[index]?._id);
     if (originalIndex === -1) return;
-    const updatedEncounters = [...run.encounters];
-    const encounterToUpdate = updatedEncounters[originalIndex];
-    
     const displayName = selectedPokemon.name_de || selectedPokemon.name_en;
-
-    if (player === 1) {
-      encounterToUpdate.pokemon1 = displayName;
-      encounterToUpdate.pokemonId1 = selectedPokemon.id;
-      encounterToUpdate.types1 = selectedPokemon.types;
-      if (encounterToUpdate.status1 === 'pending') encounterToUpdate.status1 = 'caught';
-    } else {
-      encounterToUpdate.pokemon2 = displayName;
-      encounterToUpdate.pokemonId2 = selectedPokemon.id;
-      encounterToUpdate.types2 = selectedPokemon.types;
-      if (encounterToUpdate.status2 === 'pending') encounterToUpdate.status2 = 'caught';
-    }
+    const updatedEncounters = run.encounters.map((encounter, idx) => {
+      if (idx === originalIndex) {
+        const changes = {};
+        if (player === 1) {
+          changes.pokemon1 = displayName;
+          changes.pokemonId1 = selectedPokemon.id;
+          changes.types1 = selectedPokemon.types;
+          changes.evolutionChainId1 = selectedPokemon.evolutionChainId;
+          if (encounter.status1 === 'pending') changes.status1 = 'caught';
+        } else {
+          changes.pokemon2 = displayName;
+          changes.pokemonId2 = selectedPokemon.id;
+          changes.types2 = selectedPokemon.types;
+          changes.evolutionChainId2 = selectedPokemon.evolutionChainId;
+          if (encounter.status2 === 'pending') changes.status2 = 'caught';
+        }
+        return { ...encounter, ...changes };
+      }
+      return encounter;
+    });
     setRun({ ...run, encounters: updatedEncounters });
   };
   
-  // Wieder hinzugefügte Funktion zum Speichern der Regeln
+  const handleSpriteClick = async (pokemonId) => {
+    if (!pokemonId) return;
+    onDetailOpen();
+    setIsDetailLoading(true);
+    try {
+      const response = await api.get(`/pokemon/${pokemonId}`);
+      setSelectedPokemonDetails(response.data);
+    } catch (error) {
+      console.error("Fehler beim Abrufen der Pokémon-Details:", error);
+      setSelectedPokemonDetails(null);
+    } finally {
+      setIsDetailLoading(false);
+    }
+  };
+
   const handleSaveRules = async () => {
     try {
       const response = await api.put(`/nuzlockes/${id}/rules`, { rules });
       setRun(response.data);
       toast({ title: "Regeln gespeichert!", status: "success", duration: 2000, isClosable: true });
-      onClose();
+      onRulesClose();
     } catch (err) {
       toast({ title: "Fehler beim Speichern der Regeln.", status: "error", duration: 3000, isClosable: true });
     }
@@ -161,9 +246,9 @@ function TrackerPage() {
 
   const getSaveStatusIndicator = () => {
     switch (saveStatus) {
-      case 'saving': return <Tag colorScheme="blue"><Spinner size="xs" mr={2} /> Speichern...</Tag>;
-      case 'typing': return <Tag colorScheme="orange"><TimeIcon mr={2} /> Ungespeicherte Änderungen</Tag>;
-      default: return <Tag colorScheme="green"><CheckCircleIcon mr={2} /> Gespeichert</Tag>;
+      case 'saving': return <Tag colorScheme="blue"><Spinner size="xs" mr={2} />{t('tracker.saving_status')}</Tag>;
+      case 'typing': return <Tag colorScheme="orange"><TimeIcon mr={2} />{t('tracker.unsaved_status')}</Tag>;
+      default: return <Tag colorScheme="green"><CheckCircleIcon mr={2} />{t('tracker.saved_status')}</Tag>;
     }
   };
 
@@ -180,25 +265,33 @@ function TrackerPage() {
       <Container maxW="container.2xl" py={8}>
         <Flex justifyContent="space-between" alignItems="center" mb={4}>
           <HStack>
-            <Link to="/"><Button leftIcon={<ArrowBackIcon />}>Dashboard</Button></Link>
-            {/* Der wiederhergestellte Regel-Button */}
-            <Button leftIcon={<FaBook />} onClick={onOpen}>Regeln</Button>
+            <Link to="/"><Button leftIcon={<ArrowBackIcon />}>{t('tracker.dashboard_button')}</Button></Link>
+            <Button leftIcon={<FaBook />} onClick={onRulesOpen}>{t('tracker.rules_button')}</Button>
+            <Menu closeOnSelect={false}>
+              <MenuButton as={Button} leftIcon={<Icon as={FaCog} />}>
+                {t('tracker.view_button')}
+              </MenuButton>
+              <MenuList minWidth="240px">
+                <MenuOptionGroup title={t('settings.show_columns_title')} type="checkbox" value={viewSettings.showNicknames ? ['nicknames'] : []} onChange={(value) => setViewSettings({ ...viewSettings, showNicknames: value.includes('nicknames') })}>
+                  <MenuItemOption value="nicknames">{t('settings.nickname_column')}</MenuItemOption>
+                </MenuOptionGroup>
+              </MenuList>
+            </Menu>
           </HStack>
           <Heading as="h1" size="lg" textAlign="center">{run.runName}</Heading>
-          <Box minW="180px" textAlign="right">{getSaveStatusIndicator()}</Box>
+          <Box minW="220px" textAlign="right">{getSaveStatusIndicator()}</Box>
         </Flex>
-        
-        {/* Der Rest der Seite bleibt unverändert */}
+
         <HStack spacing={8} mb={4} p={4} borderWidth={1} borderRadius="lg" align="center">
           <HStack>
-            <Text fontWeight="bold">Sortieren:</Text>
+            <Text fontWeight="bold">{t('tracker.sort_by')}</Text>
             <Select w="200px" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="default">Standard</option>
-              <option value="alpha">Alphabetisch (A-Z)</option>
+              <option value="default">{t('tracker.sort_default')}</option>
+              <option value="alpha">{t('tracker.sort_alpha')}</option>
             </Select>
           </HStack>
           <HStack>
-            <Text fontWeight="bold">Filtern:</Text>
+            <Text fontWeight="bold">{t('tracker.filter_by')}</Text>
             <CheckboxGroup colorScheme="green" value={filterBy} onChange={setFilterBy}>
               <Stack spacing={5} direction="row">
                 {filterOptions.map(option => (
@@ -210,23 +303,23 @@ function TrackerPage() {
             </CheckboxGroup>
           </HStack>
         </HStack>
-        
+
         <VStack spacing={0} align="stretch" borderWidth={1} borderRadius="lg" divider={<StackDivider />}>
           <Grid
-              templateColumns={isSoullink ? '2fr 70px 1.5fr 1.5fr 1.5fr 70px 1.5fr 1.5fr 1.5fr' : '2fr 70px 1.5fr 1.5fr 1.5fr'}
+              templateColumns={gridTemplateColumns}
               gap={4} alignItems="center" p={4} borderBottomWidth={2} borderColor="gray.300" _dark={{ borderColor: 'gray.600' }}
           >
-              <Text fontWeight="bold">Ort</Text>
-              <Text fontWeight="bold" textAlign="center">Pokémon</Text>
-              <Text fontWeight="bold">Name</Text>
-              <Text fontWeight="bold">Nickname</Text>
-              <Text fontWeight="bold">Status</Text>
+              <Text fontWeight="bold">{t('tracker.location_header')}</Text>
+              <Text fontWeight="bold" textAlign="center">{t('tracker.pokemon_header')}</Text>
+              <Text fontWeight="bold">{player1Name}</Text>
+              {viewSettings.showNicknames && <Text fontWeight="bold">{t('tracker.nickname_header')}</Text>}
+              <Text fontWeight="bold">{t('tracker.status_header')}</Text>
               {isSoullink && (
               <>
-                  <Text fontWeight="bold" textAlign="center">Pokémon</Text>
-                  <Text fontWeight="bold">Name</Text>
-                  <Text fontWeight="bold">Nickname</Text>
-                  <Text fontWeight="bold">Status</Text>
+                  <Text fontWeight="bold" textAlign="center">{t('tracker.pokemon_header')}</Text>
+                  <Text fontWeight="bold">{player2Name}</Text>
+                  {viewSettings.showNicknames && <Text fontWeight="bold">{t('tracker.nickname_header')}</Text>}
+                  <Text fontWeight="bold">{t('tracker.status_header')}</Text>
               </>
               )}
           </Grid>
@@ -239,8 +332,8 @@ function TrackerPage() {
                     <Image src={`/assets/images/badges/${encounter.badgeImage}`} alt="Orden" boxSize="32px" mr={4} />
                   )}
                   <Icon as={FaShieldAlt} mr={3} color="blue.500" />
-                  <Text fontWeight="bold">{encounter.locationName}</Text>
-                  <Text ml={2} color="gray.500" _dark={{color: "gray.400"}}> - Level Cap: {encounter.levelCap}</Text>
+                  <Text fontWeight="bold">{(i18n.language === 'de' && encounter.locationName_de) ? encounter.locationName_de : encounter.locationName_en}</Text>
+                  <Text ml={2} color="gray.500" _dark={{color: "gray.400"}}> - {t('tracker.level_cap')}: {encounter.levelCap}</Text>
                 </Flex>
               );
             }
@@ -249,27 +342,45 @@ function TrackerPage() {
             return (
               <Grid
                 key={encounter._id || index}
-                templateColumns={isSoullink ? '2fr 70px 1.5fr 1.5fr 1.5fr 70px 1.5fr 1.5fr 1.5fr' : '2fr 70px 1.5fr 1.5fr 1.5fr'}
+                templateColumns={gridTemplateColumns}
                 gap={4} alignItems="center" p={2}
                 sx={{ textDecoration: isFailed ? 'line-through' : 'none', opacity: isFailed ? 0.6 : 1, transition: 'all 0.2s' }}
               >
-                <Text>{encounter.locationName}</Text>
+                <Text>{(i18n.language === 'de' && encounter.locationName_de) ? encounter.locationName_de : encounter.locationName_en}</Text>
                 <VStack spacing={1}>
-                  <PokemonSprite pokemonId={encounter.pokemonId1} />
+                  <PokemonSprite pokemonId={encounter.pokemonId1} onClick={() => handleSpriteClick(encounter.pokemonId1)} />
                   <TypeIcons types={encounter.types1} />
                 </VStack>
-                <AutocompleteInput initialValue={encounter.pokemon1 || ''} onPokemonSelect={(p) => handlePokemonSelect(index, 1, p)} caughtPokemonIds={caughtPokemonIds} isDupesClauseActive={run.rules?.dupesClause} />
-                <Input placeholder="Nickname" value={encounter.nickname1 || ''} onChange={(e) => handleFieldChange(index, 'nickname1', e.target.value)} />
+                <AutocompleteInput
+                  initialValue={(i18n.language === 'de' && encounter.pokemon1) ? encounter.pokemon1 : encounter.pokemon1}
+                  onPokemonSelect={(p) => handlePokemonSelect(index, 1, p)}
+                  isDupesClauseActive={run.rules?.dupesClause}
+                  playerContext={1}
+                  player1CaughtChains={player1CaughtChains}
+                  player2CaughtChains={player2CaughtChains}
+                />
+                {viewSettings.showNicknames && (
+                  <Input placeholder="Nickname" value={encounter.nickname1 || ''} onChange={(e) => handleFieldChange(index, 'nickname1', e.target.value)} />
+                )}
                 {encounter.status1 === 'pending' ? <Box /> : <StatusButtonGroup currentStatus={encounter.status1} onChange={(newStatus) => handleFieldChange(index, 'status1', newStatus)} />}
                 
                 {isSoullink && (
                   <>
                     <VStack spacing={1}>
-                      <PokemonSprite pokemonId={encounter.pokemonId2} />
+                      <PokemonSprite pokemonId={encounter.pokemonId2} onClick={() => handleSpriteClick(encounter.pokemonId2)} />
                       <TypeIcons types={encounter.types2} />
                     </VStack>
-                    <AutocompleteInput initialValue={encounter.pokemon2 || ''} onPokemonSelect={(p) => handlePokemonSelect(index, 2, p)} caughtPokemonIds={caughtPokemonIds} isDupesClauseActive={run.rules?.dupesClause} />
-                    <Input placeholder="Nickname" value={encounter.nickname2 || ''} onChange={(e) => handleFieldChange(index, 'nickname2', e.target.value)} />
+                    <AutocompleteInput
+                      initialValue={(i18n.language === 'de' && encounter.pokemon2) ? encounter.pokemon2 : encounter.pokemon2}
+                      onPokemonSelect={(p) => handlePokemonSelect(index, 2, p)}
+                      isDupesClauseActive={run.rules?.dupesClause}
+                      playerContext={2}
+                      player1CaughtChains={player1CaughtChains}
+                      player2CaughtChains={player2CaughtChains}
+                    />
+                    {viewSettings.showNicknames && (
+                      <Input placeholder="Nickname" value={encounter.nickname2 || ''} onChange={(e) => handleFieldChange(index, 'nickname2', e.target.value)} />
+                    )}
                     {encounter.status2 === 'pending' ? <Box /> : <StatusButtonGroup currentStatus={encounter.status2} onChange={(newStatus) => handleFieldChange(index, 'status2', newStatus)} />}
                   </>
                 )}
@@ -279,50 +390,47 @@ function TrackerPage() {
         </VStack>
       </Container>
 
-      {/* Das wiederhergestellte Modal für die Regeln */}
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isRulesOpen} onClose={onRulesClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Regelwerk bearbeiten</ModalHeader>
+          <ModalHeader>{t('rules.modal_title')}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
               <FormControl>
-                <Checkbox 
-                  isChecked={rules.dupesClause} 
-                  onChange={(e) => setRules({...rules, dupesClause: e.target.checked})}
-                >
-                  Dupes Clause
+                <Checkbox isChecked={rules.dupesClause} onChange={(e) => setRules({...rules, dupesClause: e.target.checked})}>
+                  {t('rules.dupes_clause')}
                 </Checkbox>
               </FormControl>
               <FormControl>
-                <Checkbox 
-                  isChecked={rules.shinyClause} 
-                  onChange={(e) => setRules({...rules, shinyClause: e.target.checked})}
-                >
-                  Shiny Clause
+                <Checkbox isChecked={rules.shinyClause} onChange={(e) => setRules({...rules, shinyClause: e.target.checked})}>
+                  {t('rules.shiny_clause')}
                 </Checkbox>
               </FormControl>
               <FormControl>
-                <FormLabel>Eigene Regeln:</FormLabel>
-                <Textarea 
-                  value={rules.customRules} 
-                  onChange={(e) => setRules({...rules, customRules: e.target.value})}
-                  placeholder="Trage hier deine eigenen Regeln ein..."
-                />
+                <FormLabel>{t('rules.custom_rules_label')}</FormLabel>
+                <Textarea value={rules.customRules} onChange={(e) => setRules({...rules, customRules: e.target.value})} placeholder={t('rules.custom_rules_placeholder')} />
               </FormControl>
             </VStack>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onClose}>
-              Schließen
+            <Button variant="ghost" mr={3} onClick={onRulesClose}>
+              {t('rules.close_button')}
             </Button>
             <Button colorScheme="blue" onClick={handleSaveRules}>
-              Speichern
+              {t('rules.save_button')}
             </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <PokemonDetailModal
+        isOpen={isDetailOpen}
+        onClose={onDetailClose}
+        pokemon={selectedPokemonDetails}
+        isLoading={isDetailLoading}
+        game={run?.game}
+      />
     </>
   );
 }

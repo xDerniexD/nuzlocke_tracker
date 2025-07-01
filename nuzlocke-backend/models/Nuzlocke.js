@@ -1,8 +1,11 @@
 const mongoose = require('mongoose');
 
 const encounterSchema = new mongoose.Schema({
-  locationName: { type: String, required: true },
+  // Ersetzt das alte 'locationName'-Feld
+  locationName_de: { type: String, required: true },
+  locationName_en: { type: String, required: true },
   
+  sequence: { type: Number },
   isEncounter: { type: Boolean, default: false },
   isEvent: { type: Boolean, default: false },
   isTrainer: { type: Boolean, default: false },
@@ -14,14 +17,16 @@ const encounterSchema = new mongoose.Schema({
   // Spieler 1
   pokemon1: { type: String, default: null },
   pokemonId1: { type: Number, default: null },
-  types1: { type: [String], default: [] }, // NEU: Typen für Spieler 1
+  types1: { type: [String], default: [] },
+  evolutionChainId1: { type: Number, required: false },
   nickname1: { type: String, default: null },
   status1: { type: String, required: true, enum: ['pending', 'caught', 'fainted', 'missed', 'gift'], default: 'pending' },
 
   // Spieler 2
   pokemon2: { type: String, default: null },
   pokemonId2: { type: Number, default: null },
-  types2: { type: [String], default: [] }, // NEU: Typen für Spieler 2
+  types2: { type: [String], default: [] },
+  evolutionChainId2: { type: Number, required: false },
   nickname2: { type: String, default: null },
   status2: { type: String, required: true, enum: ['pending', 'caught', 'fainted', 'missed', 'gift'], default: 'pending' },
 });

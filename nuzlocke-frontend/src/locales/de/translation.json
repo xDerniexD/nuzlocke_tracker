@@ -11,5 +11,98 @@
   },
   "navbar": {
     "title": "Nuzlocke Tracker"
+  },
+  "stats": {
+    "hp": "KP",
+    "attack": "Angriff",
+    "defense": "Verteidigung",
+    "special-attack": "Sp.-Ang.",
+    "special-defense": "Sp.-Ver.",
+    "speed": "Initiative",
+    "atk": "Angriff",
+    "def": "Verteidigung",
+    "spa": "Sp.-Ang.",
+    "spd": "Sp.-Ver.",
+    "spe": "Initiative",
+    "total": "Gesamt"
+  },
+  "modal": {
+    "base_stats": "Basiswerte",
+    "abilities": "Fähigkeiten",
+    "hidden_ability_tag": "(Versteckt)",
+    "learnable_moves": "Erlernbare Attacken",
+    "level": "Level",
+    "move": "Attacke",
+    "tm_hm": "TM/VM",
+    "unknown_move": "Unbekannte Attacke",
+    "loading_error": "Pokémon-Daten konnten nicht geladen werden.",
+    "close_button": "Schließen"
+  },
+  "methods": {
+    "level-up": "Durch Levelanstieg",
+    "machine": "Durch TM/VM",
+    "tutor": "Durch Attacken-Lehrer"
+  },
+  "tracker": {
+    "dashboard_button": "Dashboard",
+    "rules_button": "Regeln",
+    "view_button": "Einstellungen",
+    "sort_by": "Sortieren:",
+    "filter_by": "Filtern:",
+    "location_header": "Ort",
+    "pokemon_header": "Pokémon",
+    "nickname_header": "Nickname",
+    "status_header": "Status",
+    "sort_default": "Standard",
+    "sort_alpha": "Alphabetisch (A-Z)",
+    "filter_pending": "Unbesucht",
+    "filter_caught": "Gefangen",
+    "filter_gift": "Geschenk",
+    "filter_fainted": "Besiegt",
+    "filter_missed": "Verpasst",
+    "level_cap": "Level Cap",
+    "saving_status": "Speichern...",
+    "unsaved_status": "Ungespeicherte Änderungen",
+    "saved_status": "Gespeichert"
+  },
+  "rules": {
+    "modal_title": "Regelwerk bearbeiten",
+    "dupes_clause": "Dupes Clause",
+    "shiny_clause": "Shiny Clause",
+    "custom_rules_label": "Eigene Regeln:",
+    "custom_rules_placeholder": "Trage hier deine eigenen Regeln ein...",
+    "close_button": "Schließen",
+    "save_button": "Speichern"
+  },
+  "settings": {
+    "show_columns_title": "Spalten anzeigen",
+    "nickname_column": "Nickname-Spalte"
+  },
+  "dashboard": {
+    "welcome": "Willkommen, {{username}}!",
+    "logout_button": "Ausloggen",
+    "loading_runs": "Lade Spielstände...",
+    "new_run_header": "Neuen Run starten",
+    "run_name_placeholder": "Name des Runs",
+    "game_platinum": "Pokémon Platin",
+    "run_type_solo": "Solo",
+    "run_type_soullink": "Soullink",
+    "start_button": "Run starten",
+    "join_soullink_header": "Soullink beitreten",
+    "join_placeholder": "Invite Code eingeben",
+    "join_button": "Beitreten",
+    "your_runs_header": "Deine Nuzlocke-Runs",
+    "archived_runs_header": "Archivierte Runs",
+    "show_archived_label": "Archiv anzeigen",
+    "no_active_runs": "Du hast keine aktiven Runs.",
+    "no_archived_runs": "Du hast keine archivierten Runs.",
+    "restore_run_aria": "Run wiederherstellen",
+    "archive_run_aria": "Run archivieren",
+    "delete_run_aria": "Run löschen",
+    "delete_run_title": "Run löschen",
+    "delete_run_body": "Bist du sicher? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "cancel_button": "Abbrechen",
+    "delete_button": "Löschen"
   }
+
 }
