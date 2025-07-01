@@ -1,17 +1,19 @@
 const mongoose = require('mongoose');
 
 const encounterSchema = new mongoose.Schema({
-  // Ersetzt das alte 'locationName'-Feld
   locationName_de: { type: String, required: true },
   locationName_en: { type: String, required: true },
-  
   sequence: { type: Number },
-  isEncounter: { type: Boolean, default: false },
-  isEvent: { type: Boolean, default: false },
-  isTrainer: { type: Boolean, default: false },
 
+  // Ersetzt isEncounter und isEvent durch ein aussagekräftigeres Feld
+  encounterType: { 
+    type: String, 
+    required: true, 
+    enum: ['standard', 'static', 'gift', 'event'], 
+    default: 'standard' 
+  },
+  
   levelCap: { type: Number, default: null },
-  team: { type: Array, default: [] },
   badgeImage: { type: String, default: null },
 
   // Spieler 1

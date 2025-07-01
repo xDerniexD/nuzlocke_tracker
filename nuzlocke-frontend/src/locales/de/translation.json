@@ -74,9 +74,11 @@
     "close_button": "Schließen",
     "save_button": "Speichern"
   },
-  "settings": {
-    "show_columns_title": "Spalten anzeigen",
-    "nickname_column": "Nickname-Spalte"
+    "settings": {
+    "show_columns_title": "Elemente anzeigen",
+    "nickname_column": "Nickname-Spalte",
+    "static_encounters": "Statische Begegnungen",
+    "gift_pokemon": "Geschenk-Pokémon"
   },
   "dashboard": {
     "welcome": "Willkommen, {{username}}!",

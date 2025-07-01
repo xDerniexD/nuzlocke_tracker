@@ -75,8 +75,10 @@
     "save_button": "Save"
   },
   "settings": {
-    "show_columns_title": "Show Columns",
-    "nickname_column": "Nickname Column"
+    "show_columns_title": "Show Elements",
+    "nickname_column": "Nickname Column",
+    "static_encounters": "Static Encounters",
+    "gift_pokemon": "Gift Pokémon"
   },
   "dashboard": {
     "welcome": "Welcome, {{username}}!",

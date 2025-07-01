@@ -15,35 +15,64 @@ router.post('/', protect, async (req, res) => {
     const gameDataFile = fs.readFileSync(filePath, 'utf-8');
     const gameData = JSON.parse(gameDataFile);
 
-    const validEncounterLocations = gameData.locations.filter(loc => 
-      loc.hasStandardEncounter === true ||
-      (loc.staticEncounters && loc.staticEncounters.length > 0) ||
-      (loc.giftPokemon && loc.giftPokemon.length > 0)
-    );
+    const timeline = [];
 
-    const encounterItems = validEncounterLocations.map(loc => ({
-      isEncounter: true,
-      locationName_de: loc.name.de,
-      locationName_en: loc.name.en,
-      sequence: loc.sequence,
-    }));
+    // KORRIGIERTE LOGIK: Gehe durch jeden Ort und erstelle die Zeilen nach den neuen Regeln
+    gameData.locations.forEach(loc => {
+      // 1. Prüfe, ob eine Standard-Zeile erstellt werden soll
+      if (loc.hasStandardEncounter) {
+        timeline.push({
+          encounterType: 'standard',
+          locationName_de: loc.name.de,
+          locationName_en: loc.name.en,
+          sequence: loc.sequence,
+        });
+      }
 
-    const eventItems = (gameData.events || []).map(evt => ({
-      isEvent: true,
-      locationName_de: evt.name.de,
-      locationName_en: evt.name.en,
-      levelCap: evt.levelCap,
-      badgeImage: evt.badgeImage,
-      sequence: evt.sequence || 999
-    }));
+      // 2. Prüfe, ob eine Static-Zeile erstellt werden soll
+      if (loc.staticEncounters && loc.staticEncounters.length > 0) {
+        timeline.push({
+          encounterType: 'static',
+          locationName_de: `${loc.name.de} (Static)`,
+          locationName_en: `${loc.name.en} (Static)`,
+          sequence: (loc.sequence || 999) + 0.1,
+        });
+      }
 
-    const timeline = [...encounterItems, ...eventItems];
+      // 3. Prüfe, ob eine Geschenk-Zeile erstellt werden soll
+      if (loc.giftPokemon && loc.giftPokemon.length > 0) {
+        timeline.push({
+          encounterType: 'gift',
+          locationName_de: `${loc.name.de} (Geschenk)`,
+          locationName_en: `${loc.name.en} (Gift)`,
+          sequence: (loc.sequence || 999) + 0.2,
+          status1: 'gift',
+        });
+      }
+    });
+
+    // Events werden wie bisher hinzugefügt
+    (gameData.events || []).forEach(evt => {
+      timeline.push({
+        encounterType: 'event',
+        locationName_de: evt.name.de,
+        locationName_en: evt.name.en,
+        levelCap: evt.levelCap,
+        badgeImage: evt.badgeImage,
+        sequence: evt.sequence || 999
+      });
+    });
+
+    // Gesamte Timeline nach Sequenz sortieren
     timeline.sort((a, b) => (a.sequence || 999) - (b.sequence || 999));
 
     const initialEncounters = timeline.map(item => ({
       ...item,
-      pokemon1: null, pokemonId1: null, types1: [], nickname1: null, status1: 'pending',
-      pokemon2: null, pokemonId2: null, types2: [], nickname2: null, status2: 'pending',
+      pokemon1: item.pokemon1 || null, 
+      pokemonId1: null, types1: [], nickname1: null, 
+      status1: item.status1 || 'pending',
+      pokemon2: null, pokemonId2: null, types2: [], nickname2: null, 
+      status2: 'pending',
     }));
 
     const newNuzlockeData = {
@@ -66,7 +95,9 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// POST /api/nuzlockes/join - Einem Soullink beitreten
+// ... der Rest der Datei (GET, PUT, DELETE etc.) bleibt unverändert ...
+
+// POST /api/nuzlockes/join
 router.post('/join', protect, async (req, res) => {
   try {
     const { inviteCode } = req.body;
@@ -95,7 +126,7 @@ router.post('/join', protect, async (req, res) => {
   }
 });
 
-// GET /api/nuzlockes - Alle Runs eines Nutzers abrufen
+// GET /api/nuzlockes
 router.get('/', protect, async (req, res) => {
   try {
     const nuzlockes = await Nuzlocke.find({ participants: req.user._id });
@@ -105,7 +136,7 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
-// GET /api/nuzlockes/:id - Einen einzelnen Run abrufen
+// GET /api/nuzlockes/:id
 router.get('/:id', protect, async (req, res) => {
   try {
     const nuzlocke = await Nuzlocke.findById(req.params.id).populate('participants', 'username');
@@ -122,7 +153,7 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// PUT /api/nuzlockes/:id - Einen Run aktualisieren
+// PUT /api/nuzlockes/:id
 router.put('/:id', protect, async (req, res) => {
   try {
     const { encounters } = req.body;
@@ -150,7 +181,7 @@ router.put('/:id', protect, async (req, res) => {
   }
 });
 
-// PUT /api/nuzlockes/:id/rules - Regeln für einen Run aktualisieren
+// PUT /api/nuzlockes/:id/rules
 router.put('/:id/rules', protect, async (req, res) => {
   try {
     const { rules } = req.body;
@@ -178,7 +209,7 @@ router.put('/:id/rules', protect, async (req, res) => {
   }
 });
 
-// DELETE /api/nuzlockes/:id - Einen Run löschen
+// DELETE /api/nuzlockes/:id
 router.delete('/:id', protect, async (req, res) => {
   try {
     const nuzlocke = await Nuzlocke.findById(req.params.id);
@@ -200,7 +231,7 @@ router.delete('/:id', protect, async (req, res) => {
   }
 });
 
-// PUT /api/nuzlockes/:id/archive - Einen Run archivieren/de-archivieren
+// PUT /api/nuzlockes/:id/archive
 router.put('/:id/archive', protect, async (req, res) => {
   try {
     const nuzlocke = await Nuzlocke.findById(req.params.id);
@@ -222,6 +253,5 @@ router.put('/:id/archive', protect, async (req, res) => {
     res.status(500).json({ message: 'Serverfehler beim Archivieren des Runs', error: error.message });
   }
 });
-
 
 module.exports = router;

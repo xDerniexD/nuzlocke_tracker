@@ -37,7 +37,12 @@ function TrackerPage() {
   const { isOpen: isDetailOpen, onOpen: onDetailOpen, onClose: onDetailClose } = useDisclosure();
 
   const [rules, setRules] = useState({ dupesClause: true, shinyClause: true, customRules: '' });
-  const [viewSettings, setViewSettings] = useState({ showNicknames: true });
+  
+  const [viewSettings, setViewSettings] = useState({
+    showNicknames: true,
+    showStatic: true,
+    showGift: true,
+  });
   
   const [selectedPokemonDetails, setSelectedPokemonDetails] = useState(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -77,6 +82,24 @@ function TrackerPage() {
       }
     });
     return Array.from(chains);
+  }, [run]);
+  
+  // NEU: Logik zur Erkennung verbrauchter Slots
+  const usedLocationTypes = useMemo(() => {
+    if (!run) return new Set();
+    
+    const used = new Set();
+    const finalStatuses = ['caught', 'gift', 'fainted', 'missed'];
+
+    run.encounters.forEach(encounter => {
+      if (finalStatuses.includes(encounter.status1)) {
+        used.add(`${encounter.locationName_en}-${encounter.encounterType}`);
+      }
+      if (run.type === 'soullink' && finalStatuses.includes(encounter.status2)) {
+        used.add(`${encounter.locationName_en}-${encounter.encounterType}`);
+      }
+    });
+    return used;
   }, [run]);
 
   const gridTemplateColumns = useMemo(() => {
@@ -133,16 +156,26 @@ function TrackerPage() {
   useEffect(() => {
     if (!run) return;
     let processedEncounters = [...run.encounters];
+
     if (filterBy.length > 0) {
       processedEncounters = processedEncounters.filter(encounter => {
-        if (encounter.isEvent) return true;
+        const isSpecialType = ['event', 'static', 'gift'].includes(encounter.encounterType);
+        if (isSpecialType) return true;
+        
         const p1Match = filterBy.includes(encounter.status1);
         const p2Match = run.type === 'soullink' ? filterBy.includes(encounter.status2) : false;
         return p1Match || p2Match;
       });
     } else {
-      processedEncounters = processedEncounters.filter(encounter => encounter.isEvent);
+      processedEncounters = processedEncounters.filter(encounter => encounter.encounterType === 'event');
     }
+
+    processedEncounters = processedEncounters.filter(encounter => {
+        if (encounter.encounterType === 'static' && !viewSettings.showStatic) return false;
+        if (encounter.encounterType === 'gift' && !viewSettings.showGift) return false;
+        return true;
+    });
+
     if (sortBy === 'alpha') {
       processedEncounters.sort((a, b) => {
         const nameA = i18n.language === 'de' ? a.locationName_de : a.locationName_en;
@@ -153,7 +186,7 @@ function TrackerPage() {
       processedEncounters.sort((a, b) => (a.sequence || 999) - (b.sequence || 999));
     }
     setDisplayedEncounters(processedEncounters);
-  }, [run, sortBy, filterBy, i18n.language]);
+  }, [run, sortBy, filterBy, i18n.language, viewSettings]);
 
   const handleUpdateRun = useCallback(async () => {
     if (!run) return;
@@ -275,13 +308,26 @@ function TrackerPage() {
                 {t('tracker.view_button')}
               </MenuButton>
               <MenuList minWidth="240px">
-                <MenuOptionGroup title={t('settings.show_columns_title')} type="checkbox" value={viewSettings.showNicknames ? ['nicknames'] : []} onChange={(value) => setViewSettings({ ...viewSettings, showNicknames: value.includes('nicknames') })}>
-                  <MenuItemOption value="nicknames">{t('settings.nickname_column')}</MenuItemOption>
+                <MenuOptionGroup
+                  title={t('settings.show_columns_title')}
+                  type="checkbox"
+                  value={Object.keys(viewSettings).filter(key => viewSettings[key])}
+                  onChange={(values) =>
+                    setViewSettings({
+                      showNicknames: values.includes('showNicknames'),
+                      showStatic: values.includes('showStatic'),
+                      showGift: values.includes('showGift'),
+                    })
+                  }
+                >
+                  <MenuItemOption value="showNicknames">{t('settings.nickname_column')}</MenuItemOption>
+                  <MenuItemOption value="showStatic">{t('settings.static_encounters')}</MenuItemOption>
+                  <MenuItemOption value="showGift">{t('settings.gift_pokemon')}</MenuItemOption>
                 </MenuOptionGroup>
               </MenuList>
             </Menu>
           </HStack>
-
+          
           <VStack spacing={0}>
             <Heading as="h1" size="lg" textAlign="center">{run.runName}</Heading>
             {run?.type === 'soullink' && run.inviteCode && (
@@ -293,13 +339,7 @@ function TrackerPage() {
                   {run.inviteCode}
                 </Tag>
                 <Tooltip label={hasCopied ? "Kopiert!" : "Kopieren"} closeOnClick={false}>
-                  <IconButton
-                    aria-label="Invite Code kopieren"
-                    icon={<FaCopy />}
-                    size="sm"
-                    onClick={onCopy}
-                    variant="ghost"
-                  />
+                  <IconButton aria-label="Invite Code kopieren" icon={<FaCopy />} size="sm" onClick={onCopy} variant="ghost" />
                 </Tooltip>
               </HStack>
             )}
@@ -351,7 +391,7 @@ function TrackerPage() {
           </Grid>
           
           {displayedEncounters.map((encounter, index) => {
-            if (encounter.isEvent) {
+            if (encounter.encounterType === 'event') {
               return (
                 <Flex key={encounter._id || index} align="center" justify="center" py={3} bg="gray.100" _dark={{ bg: 'gray.700' }}>
                   {encounter.badgeImage && (
@@ -365,6 +405,11 @@ function TrackerPage() {
             }
             
             const isFailed = encounter.status1 === 'fainted' || encounter.status1 === 'missed' || (isSoullink && (encounter.status2 === 'fainted' || encounter.status2 === 'missed'));
+            const isPlayer1SlotUsed = usedLocationTypes.has(`${encounter.locationName_en}-${encounter.encounterType}`);
+            const isPlayer1Disabled = isPlayer1SlotUsed && encounter.status1 === 'pending';
+            const isPlayer2SlotUsed = isSoullink && usedLocationTypes.has(`${encounter.locationName_en}-${encounter.encounterType}`);
+            const isPlayer2Disabled = isPlayer2SlotUsed && encounter.status2 === 'pending';
+
             return (
               <Grid
                 key={encounter._id || index}
@@ -384,6 +429,7 @@ function TrackerPage() {
                   playerContext={1}
                   player1CaughtChains={player1CaughtChains}
                   player2CaughtChains={player2CaughtChains}
+                  isDisabled={isPlayer1Disabled}
                 />
                 {viewSettings.showNicknames && (
                   <Input placeholder="Nickname" value={encounter.nickname1 || ''} onChange={(e) => handleFieldChange(index, 'nickname1', e.target.value)} />
@@ -403,6 +449,7 @@ function TrackerPage() {
                       playerContext={2}
                       player1CaughtChains={player1CaughtChains}
                       player2CaughtChains={player2CaughtChains}
+                      isDisabled={isPlayer2Disabled}
                     />
                     {viewSettings.showNicknames && (
                       <Input placeholder="Nickname" value={encounter.nickname2 || ''} onChange={(e) => handleFieldChange(index, 'nickname2', e.target.value)} />
