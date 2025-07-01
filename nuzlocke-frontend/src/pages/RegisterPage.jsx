@@ -31,7 +31,7 @@ function RegisterPage() {
 
     try {
       // Sende nur noch 'username' und 'password'
-      await axios.post('http://localhost:3000/api/users/register', {
+      await axios.post('https://nuzlocke-api.zyndoras.de/api/users/register', {
         username,
         password,
       });

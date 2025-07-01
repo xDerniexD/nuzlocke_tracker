@@ -26,7 +26,7 @@ function LoginPage({ onLoginSuccess }) {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:3000/api/users/login', {
+      const response = await axios.post('https://nuzlocke-api.zyndoras.de/api/users/login', {
         username: username,
         password: password,
       });

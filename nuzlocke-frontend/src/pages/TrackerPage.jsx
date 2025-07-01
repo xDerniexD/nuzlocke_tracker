@@ -117,7 +117,7 @@ function TrackerPage() {
   }, [run?.type, viewSettings.showNicknames]);
 
   useEffect(() => {
-    const socket = io('http://localhost:3000');
+    const socket = io('https://nuzlocke-api.zyndoras.de');
     socket.on('connect', () => {
       socket.emit('joinRoom', id);
     });
