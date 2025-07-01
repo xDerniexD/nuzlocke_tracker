@@ -14,10 +14,11 @@ import {
   VStack, StackDivider, useDisclosure,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter,
   ModalBody, ModalCloseButton, FormControl, FormLabel, Textarea,
-  Menu, MenuButton, MenuList, MenuItemOption, MenuOptionGroup
+  Menu, MenuButton, MenuList, MenuItemOption, MenuOptionGroup,
+  useClipboard, Tooltip, IconButton
 } from '@chakra-ui/react';
 import { ArrowBackIcon, CheckCircleIcon, TimeIcon } from '@chakra-ui/icons';
-import { FaShieldAlt, FaBook, FaCog } from 'react-icons/fa';
+import { FaShieldAlt, FaBook, FaCog, FaCopy } from 'react-icons/fa';
 import io from 'socket.io-client';
 
 function TrackerPage() {
@@ -40,6 +41,8 @@ function TrackerPage() {
   
   const [selectedPokemonDetails, setSelectedPokemonDetails] = useState(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
+
+  const { onCopy, hasCopied } = useClipboard(run?.inviteCode || '');
 
   const [sortBy, setSortBy] = useState('default');
   
@@ -278,7 +281,30 @@ function TrackerPage() {
               </MenuList>
             </Menu>
           </HStack>
-          <Heading as="h1" size="lg" textAlign="center">{run.runName}</Heading>
+
+          <VStack spacing={0}>
+            <Heading as="h1" size="lg" textAlign="center">{run.runName}</Heading>
+            {run?.type === 'soullink' && run.inviteCode && (
+              <HStack mt={2} p={1.5} pl={3} borderRadius="md" bg="gray.100" _dark={{ bg: 'gray.700' }}>
+                <Text fontSize="sm" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.300' }}>
+                  Invite Code:
+                </Text>
+                <Tag size="lg" colorScheme="purple" fontWeight="bold">
+                  {run.inviteCode}
+                </Tag>
+                <Tooltip label={hasCopied ? "Kopiert!" : "Kopieren"} closeOnClick={false}>
+                  <IconButton
+                    aria-label="Invite Code kopieren"
+                    icon={<FaCopy />}
+                    size="sm"
+                    onClick={onCopy}
+                    variant="ghost"
+                  />
+                </Tooltip>
+              </HStack>
+            )}
+          </VStack>
+
           <Box minW="220px" textAlign="right">{getSaveStatusIndicator()}</Box>
         </Flex>
 
@@ -352,7 +378,7 @@ function TrackerPage() {
                   <TypeIcons types={encounter.types1} />
                 </VStack>
                 <AutocompleteInput
-                  initialValue={(i18n.language === 'de' && encounter.pokemon1) ? encounter.pokemon1 : encounter.pokemon1}
+                  initialValue={encounter.pokemon1 || ''}
                   onPokemonSelect={(p) => handlePokemonSelect(index, 1, p)}
                   isDupesClauseActive={run.rules?.dupesClause}
                   playerContext={1}
@@ -371,7 +397,7 @@ function TrackerPage() {
                       <TypeIcons types={encounter.types2} />
                     </VStack>
                     <AutocompleteInput
-                      initialValue={(i18n.language === 'de' && encounter.pokemon2) ? encounter.pokemon2 : encounter.pokemon2}
+                      initialValue={encounter.pokemon2 || ''}
                       onPokemonSelect={(p) => handlePokemonSelect(index, 2, p)}
                       isDupesClauseActive={run.rules?.dupesClause}
                       playerContext={2}
