@@ -20,9 +20,9 @@ function AutocompleteInput({
   playerContext,
   player1CaughtChains = [],
   player2CaughtChains = [],
-  isDisabled = false, // Neue Prop
 }) {
   const { i18n } = useTranslation();
+  // KORREKTUR 1: Sicherstellen, dass der Startwert kein null ist.
   const [inputValue, setInputValue] = useState(initialValue || '');
   const [suggestions, setSuggestions] = useState([]);
   const [rawSuggestions, setRawSuggestions] = useState([]);
@@ -32,8 +32,9 @@ function AutocompleteInput({
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [pokemonToConfirm, setPokemonToConfirm] = useState(null);
-  const cancelRef = useRef();
+  const cancelRef = React.useRef();
 
+  // KORREKTUR 2: Sicherstellen, dass der Wert bei Updates kein null wird.
   useEffect(() => {
     setInputValue(initialValue || '');
   }, [initialValue]);
@@ -44,6 +45,7 @@ function AutocompleteInput({
   });
 
   useEffect(() => {
+    // Durch die Korrekturen oben ist dieser Check jetzt immer sicher.
     if (!inputValue || inputValue.length < 2) {
       setRawSuggestions([]);
       setIsListOpen(false);
@@ -109,15 +111,12 @@ function AutocompleteInput({
 
   return (
     <>
-      <Box position="relative" ref={ref} opacity={isDisabled ? 0.5 : 1}>
+      <Box position="relative" ref={ref}>
         <Input
           placeholder="Name..."
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onFocus={() => inputValue && inputValue.length > 1 && setIsListOpen(true)}
-          isDisabled={isDisabled}
-          pointerEvents={isDisabled ? 'none' : 'auto'}
-          cursor={isDisabled ? 'not-allowed' : 'text'}
         />
         {isListOpen && suggestions.length > 0 && (
           <List

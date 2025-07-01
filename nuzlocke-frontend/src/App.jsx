@@ -6,7 +6,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import RegisterPage from './pages/RegisterPage';
 import TrackerPage from './pages/TrackerPage';
-import Navbar from './components/navbar'; 
+import Navbar from './components/Navbar'; 
 
 import './App.css';
 
