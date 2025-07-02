@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/api';
 import {
   Box,
   Button,
@@ -31,7 +31,7 @@ function RegisterPage() {
 
     try {
       // Sende nur noch 'username' und 'password'
-      await axios.post('http://localhost:3000/api/users/register', {
+      await api.post('/users/register', {
         username,
         password,
       });

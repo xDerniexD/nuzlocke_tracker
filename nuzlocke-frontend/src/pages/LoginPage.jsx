@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/api';
 import {
   Box,
   Button,
@@ -26,7 +26,7 @@ function LoginPage({ onLoginSuccess }) {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:3000/api/users/login', {
+      const response = await api.post('/users/login', {
         username: username,
         password: password,
       });

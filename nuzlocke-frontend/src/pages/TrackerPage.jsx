@@ -117,7 +117,7 @@ function TrackerPage() {
   }, [run?.type, viewSettings.showNicknames]);
 
   useEffect(() => {
-    const socket = io('http://localhost:3000');
+    const socket = io(import.meta.env.VITE_API_BASE_URL);
     socket.on('connect', () => {
       socket.emit('joinRoom', id);
     });
