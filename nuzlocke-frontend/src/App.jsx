@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Flex, Spinner } from '@chakra-ui/react'; // Spinner importieren
 
 // Importiere alle deine Seiten-Komponenten und die neue Navbar
 import LoginPage from './pages/LoginPage';
@@ -12,15 +13,17 @@ import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // NEU: Ladezustand
   const navigate = useNavigate();
 
-  // Die Logik hier bleibt unverändert
   useEffect(() => {
     const loggedInUserJSON = localStorage.getItem('user');
-    if (loggedInUserJSON) {
+    const token = localStorage.getItem('token'); // Auch den Token prüfen
+    if (loggedInUserJSON && token) {
       const foundUser = JSON.parse(loggedInUserJSON);
       setUser(foundUser);
     }
+    setLoading(false); // NEU: Ladevorgang abschließen
   }, []);
 
   const handleLogout = () => {
@@ -35,35 +38,41 @@ function App() {
     navigate('/');
   };
 
+  // NEU: Während der Prüfung wird ein Lade-Spinner angezeigt
+  if (loading) {
+    return (
+      <Flex justify="center" align="center" height="100vh">
+        <Spinner size="xl" />
+      </Flex>
+    );
+  }
+
   return (
     <div className="App">
-      <Navbar />
+      {/* Die Navbar wird nur angezeigt, wenn ein User eingeloggt ist */}
+      {user && <Navbar user={user} onLogout={handleLogout} />}
+      
       <Routes>
-        {/* Route für die Login-Seite */}
         <Route 
           path="/login" 
           element={user ? <Navigate to="/" /> : <LoginPage onLoginSuccess={handleLoginSuccess} />} 
         />
         
-        {/* Route für die Registrierungs-Seite */}
         <Route 
           path="/register" 
           element={user ? <Navigate to="/" /> : <RegisterPage />} 
         />
 
-        {/* Route für die Tracker-Detailseite */}
         <Route 
           path="/nuzlocke/:id" 
           element={user ? <TrackerPage /> : <Navigate to="/login" />}
         />
 
-        {/* Route für das Dashboard (die Startseite "/") */}
         <Route 
           path="/" 
           element={user ? <DashboardPage user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
         />
 
-        {/* DEBUGGING: "Catch-all"-Route, falls keine andere Route passt */}
         <Route 
           path="*"
           element={<h2 style={{ textAlign: 'center' }}>FEHLER: Keine Route für diesen Pfad gefunden!</h2>}

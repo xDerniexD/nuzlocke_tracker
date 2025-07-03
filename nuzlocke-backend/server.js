@@ -12,9 +12,9 @@ const bcrypt = require('bcryptjs');
 
 // Importiere die Models und Middleware
 const User = require('./models/User');
+const Pokemon = require('./models/Pokemon');
 const { protect } = require('./middleware/authMiddleware');
 const nuzlockeRoutes = require('./routes/nuzlockeRoutes');
-const pokemonRoutes = require('./routes/pokemonRoutes'); // NEU
 
 const app = express();
 const PORT = 3000;
@@ -54,7 +54,24 @@ mongoose.connect(dbURI)
 
 // --- API-Endpunkte ---
 
-// Die Pokémon-Routen wurden entfernt und in eine eigene Datei ausgelagert.
+app.get('/api/pokemon/search', async (req, res) => {
+    try {
+        const query = req.query.q || '';
+        if (query.length < 2) {
+            return res.json([]);
+        }
+        const searchRegex = new RegExp(query, 'i');
+        const results = await Pokemon.find({
+            $or: [
+                { name_de: searchRegex },
+                { name_en: searchRegex }
+            ]
+        }).limit(15);
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ message: "Fehler bei der Pokémon-Suche." });
+    }
+});
 
 app.get('/api/games/platinum', (req, res) => {
   const filePath = path.join(__dirname, 'data', 'platinum.json');
@@ -97,7 +114,10 @@ app.post('/api/users/login', async (req, res) => {
       return res.status(400).json({ message: 'Ungültige Anmeldedaten.' });
     }
     const payload = { id: user._id, username: user.username };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+    
+    // KORREKTUR: Die Lebenszeit des Tokens von 1 Stunde auf 30 Tage erhöht.
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
+    
     res.json({
       message: 'Login erfolgreich!',
       token: token,
@@ -114,6 +134,4 @@ app.get('/api/users/profile', protect, (req, res) => {
 
 
 app.set('socketio', io);
-// Verwendung der ausgelagerten Routen
-app.use('/api/pokemon', pokemonRoutes); // NEU
 app.use('/api/nuzlockes', nuzlockeRoutes);

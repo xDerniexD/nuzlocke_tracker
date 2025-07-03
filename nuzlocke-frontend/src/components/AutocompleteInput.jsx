@@ -20,9 +20,9 @@ function AutocompleteInput({
   playerContext,
   player1CaughtChains = [],
   player2CaughtChains = [],
+  isDisabled = false, // Die Prop wird hier empfangen
 }) {
   const { i18n } = useTranslation();
-  // KORREKTUR 1: Sicherstellen, dass der Startwert kein null ist.
   const [inputValue, setInputValue] = useState(initialValue || '');
   const [suggestions, setSuggestions] = useState([]);
   const [rawSuggestions, setRawSuggestions] = useState([]);
@@ -32,9 +32,8 @@ function AutocompleteInput({
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [pokemonToConfirm, setPokemonToConfirm] = useState(null);
-  const cancelRef = React.useRef();
+  const cancelRef = useRef();
 
-  // KORREKTUR 2: Sicherstellen, dass der Wert bei Updates kein null wird.
   useEffect(() => {
     setInputValue(initialValue || '');
   }, [initialValue]);
@@ -45,22 +44,18 @@ function AutocompleteInput({
   });
 
   useEffect(() => {
-    // Durch die Korrekturen oben ist dieser Check jetzt immer sicher.
-    if (!inputValue || inputValue.length < 2) {
+    if (isDisabled || !inputValue || inputValue.length < 2) {
       setRawSuggestions([]);
       setIsListOpen(false);
       return;
     }
 
-    if (debounceTimeout.current) {
-      clearTimeout(debounceTimeout.current);
-    }
+    if (debounceTimeout.current) { clearTimeout(debounceTimeout.current); }
 
     debounceTimeout.current = setTimeout(async () => {
       try {
         const response = await api.get(`/pokemon/search?q=${inputValue}`);
         setRawSuggestions(response.data);
-        setIsListOpen(true);
       } catch (error) {
         console.error("Fehler bei der Pokémon-Suche:", error);
         setRawSuggestions([]);
@@ -68,18 +63,13 @@ function AutocompleteInput({
     }, 300);
 
     return () => clearTimeout(debounceTimeout.current);
-  }, [inputValue]);
+  }, [inputValue, isDisabled]);
 
   useEffect(() => {
     const results = rawSuggestions.map(p => {
       const isDupeForP1 = isDupesClauseActive && p.evolutionChainId && player1CaughtChains.includes(p.evolutionChainId);
       const isDupeForP2 = isDupesClauseActive && p.evolutionChainId && player2CaughtChains.includes(p.evolutionChainId);
-
-      return {
-        ...p,
-        isDupeForP1,
-        isDupeForP2,
-      };
+      return { ...p, isDupeForP1, isDupeForP2 };
     });
     setSuggestions(results);
   }, [rawSuggestions, player1CaughtChains, player2CaughtChains, isDupesClauseActive]);
@@ -100,7 +90,6 @@ function AutocompleteInput({
 
   const handleSelect = (pokemon) => {
     const isDupeForCurrentUser = (playerContext === 1 && pokemon.isDupeForP1) || (playerContext === 2 && pokemon.isDupeForP2);
-
     if (isDupeForCurrentUser) {
       setPokemonToConfirm(pokemon);
       onOpen();
@@ -109,16 +98,32 @@ function AutocompleteInput({
     }
   };
 
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setInputValue(value);
+    if (value.length >= 2) {
+      setIsListOpen(true);
+    } else {
+      setIsListOpen(false);
+    }
+  };
+
   return (
     <>
-      <Box position="relative" ref={ref}>
+      <Box position="relative" ref={ref} opacity={isDisabled ? 0.6 : 1}>
         <Input
           placeholder="Name..."
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onFocus={() => inputValue && inputValue.length > 1 && setIsListOpen(true)}
+          onChange={handleInputChange}
+          onFocus={() => {
+            if (inputValue && inputValue.length > 1 && suggestions.length > 0) {
+              setIsListOpen(true);
+            }
+          }}
+          isDisabled={isDisabled}
+          cursor={isDisabled ? 'not-allowed' : 'text'}
         />
-        {isListOpen && suggestions.length > 0 && (
+        {isListOpen && suggestions.length > 0 && !isDisabled && (
           <List
             position="absolute"
             top="100%"
@@ -168,20 +173,14 @@ function AutocompleteInput({
       >
         <AlertDialogOverlay>
           <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Duplikat bestätigen
-            </AlertDialogHeader>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">Duplikat bestätigen</AlertDialogHeader>
             <AlertDialogBody>
               Dieses Pokémon ist laut Dupes Clause ein Duplikat für diesen Spieler.
               Bist du sicher, dass du es trotzdem auswählen möchtest?
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onClose}>
-                Abbrechen
-              </Button>
-              <Button colorScheme="red" onClick={handleConfirmSelection} ml={3}>
-                Trotzdem auswählen
-              </Button>
+              <Button ref={cancelRef} onClick={onClose}>Abbrechen</Button>
+              <Button colorScheme="red" onClick={handleConfirmSelection} ml={3}>Trotzdem auswählen</Button>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialogOverlay>
