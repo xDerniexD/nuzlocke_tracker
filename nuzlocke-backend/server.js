@@ -12,9 +12,12 @@ const bcrypt = require('bcryptjs');
 
 // Importiere die Models und Middleware
 const User = require('./models/User');
-const Pokemon = require('./models/Pokemon');
+// Das Pokemon-Model wird hier nicht mehr direkt benötigt, da die Route es importiert
+// const Pokemon = require('./models/Pokemon'); 
 const { protect } = require('./middleware/authMiddleware');
 const nuzlockeRoutes = require('./routes/nuzlockeRoutes');
+// NEU: Importiere die Pokémon-Routen
+const pokemonRoutes = require('./routes/pokemonRoutes');
 
 const app = express();
 const PORT = 3000;
@@ -54,24 +57,8 @@ mongoose.connect(dbURI)
 
 // --- API-Endpunkte ---
 
-app.get('/api/pokemon/search', async (req, res) => {
-    try {
-        const query = req.query.q || '';
-        if (query.length < 2) {
-            return res.json([]);
-        }
-        const searchRegex = new RegExp(query, 'i');
-        const results = await Pokemon.find({
-            $or: [
-                { name_de: searchRegex },
-                { name_en: searchRegex }
-            ]
-        }).limit(15);
-        res.json(results);
-    } catch (error) {
-        res.status(500).json({ message: "Fehler bei der Pokémon-Suche." });
-    }
-});
+// ENTFERNT: Der alte Such-Endpunkt. Diese Logik befindet sich jetzt in pokemonRoutes.js
+// app.get('/api/pokemon/search', ...);
 
 app.get('/api/games/platinum', (req, res) => {
   const filePath = path.join(__dirname, 'data', 'platinum.json');
@@ -114,10 +101,7 @@ app.post('/api/users/login', async (req, res) => {
       return res.status(400).json({ message: 'Ungültige Anmeldedaten.' });
     }
     const payload = { id: user._id, username: user.username };
-    
-    // KORREKTUR: Die Lebenszeit des Tokens von 1 Stunde auf 30 Tage erhöht.
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
-    
     res.json({
       message: 'Login erfolgreich!',
       token: token,
@@ -134,4 +118,6 @@ app.get('/api/users/profile', protect, (req, res) => {
 
 
 app.set('socketio', io);
+// NEU: Binde die Pokémon-Routen korrekt ein
+app.use('/api/pokemon', pokemonRoutes);
 app.use('/api/nuzlockes', nuzlockeRoutes);

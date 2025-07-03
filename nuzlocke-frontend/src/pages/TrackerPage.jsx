@@ -18,7 +18,7 @@ import {
   useClipboard, Tooltip, IconButton
 } from '@chakra-ui/react';
 import { ArrowBackIcon, CheckCircleIcon, TimeIcon } from '@chakra-ui/icons';
-import { FaShieldAlt, FaBook, FaCog, FaCopy } from 'react-icons/fa';
+import { FaShieldAlt, FaBook, FaCog, FaCopy, FaTrashRestore, FaArrowUp } from 'react-icons/fa';
 import io from 'socket.io-client';
 
 function TrackerPage() {
@@ -144,12 +144,12 @@ function TrackerPage() {
   
   const gridTemplateColumns = useMemo(() => {
     if (!run) return '';
-    const columns = ['2fr', '80px', '1.5fr'];
+    const columns = ['40px', '2fr', '80px', '1.5fr', '50px'];
     if (viewSettings.showNicknames) { columns.push('1.5fr'); }
     columns.push('1.5fr');
 
     if (run.type === 'soullink') {
-      columns.push('80px', '1.5fr');
+      columns.push('80px', '1.5fr', '50px');
       if (viewSettings.showNicknames) { columns.push('1.5fr'); }
       columns.push('1.5fr');
     }
@@ -259,6 +259,95 @@ function TrackerPage() {
     saveEncounterChange(updatedEncounter);
   };
   
+  const handleClearEncounter = (encounterToClear) => {
+    if (!encounterToClear) return;
+
+    const clearedEncounter = {
+      ...encounterToClear,
+      pokemon1: null,
+      pokemonId1: null,
+      types1: [],
+      nickname1: '',
+      status1: encounterToClear.encounterType === 'gift' ? 'gift' : 'pending',
+      evolutionChainId1: null,
+    };
+
+    if (run.type === 'soullink') {
+      clearedEncounter.pokemon2 = null;
+      clearedEncounter.pokemonId2 = null;
+      clearedEncounter.types2 = [];
+      clearedEncounter.nickname2 = '';
+      clearedEncounter.status2 = encounterToClear.encounterType === 'gift' ? 'gift' : 'pending';
+      clearedEncounter.evolutionChainId2 = null;
+    }
+
+    setRun(prevRun => ({
+      ...prevRun,
+      encounters: prevRun.encounters.map(e => e._id === clearedEncounter._id ? clearedEncounter : e)
+    }));
+
+    saveEncounterChange(clearedEncounter);
+  };
+  
+  const handleEvolve = async (encounterToEvolve, player) => {
+    const currentPokemonId = player === 1 ? encounterToEvolve.pokemonId1 : encounterToEvolve.pokemonId2;
+    if (!currentPokemonId) return;
+
+    try {
+      const currentPokemonRes = await api.get(`/pokemon/${currentPokemonId}`);
+      const currentPokemon = currentPokemonRes.data;
+
+      if (!currentPokemon.evolutions || currentPokemon.evolutions.length === 0) {
+        toast({ title: "Keine Weiterentwicklung verfügbar.", status: "info", duration: 2000, isClosable: true });
+        return;
+      }
+
+      const nextEvolution = currentPokemon.evolutions[0];
+      
+      // KORRIGIERT: Verwende `to_id` anstatt `id`
+      const nextPokemonId = nextEvolution.to_id; 
+      
+      if (!nextPokemonId) {
+        toast({ title: "Fehler: Entwicklungs-ID nicht gefunden.", status: "error", duration: 3000 });
+        return;
+      }
+
+      const nextPokemonRes = await api.get(`/pokemon/${nextPokemonId}`);
+      const nextPokemon = nextPokemonRes.data;
+
+      let changes = {};
+      const newName = i18n.language === 'de' && nextPokemon.name_de ? nextPokemon.name_de : nextPokemon.name_en;
+
+      if (player === 1) {
+        changes = {
+          pokemon1: newName,
+          pokemonId1: nextPokemon.id,
+          types1: nextPokemon.types,
+          evolutionChainId1: nextPokemon.evolutionChainId,
+        };
+      } else {
+        changes = {
+          pokemon2: newName,
+          pokemonId2: nextPokemon.id,
+          types2: nextPokemon.types,
+          evolutionChainId2: nextPokemon.evolutionChainId,
+        };
+      }
+
+      const updatedEncounter = { ...encounterToEvolve, ...changes };
+      
+      setRun(prevRun => ({
+        ...prevRun,
+        encounters: prevRun.encounters.map(e => e._id === updatedEncounter._id ? updatedEncounter : e)
+      }));
+
+      saveEncounterChange(updatedEncounter);
+
+    } catch (error) {
+      toast({ title: "Fehler bei der Entwicklung.", status: "error", duration: 3000 });
+    }
+  };
+
   const handleSpriteClick = async (pokemonId) => {
     if (!pokemonId) return;
     onDetailOpen();
@@ -375,15 +464,18 @@ function TrackerPage() {
               templateColumns={gridTemplateColumns}
               gap={4} alignItems="center" p={4} borderBottomWidth={2} borderColor="gray.300" _dark={{ borderColor: 'gray.600' }}
           >
+              <Box /> 
               <Text fontWeight="bold">{t('tracker.location_header')}</Text>
               <Text fontWeight="bold" textAlign="center" whiteSpace="nowrap">{t('tracker.pokemon_header')}</Text>
               <Text fontWeight="bold">{player1Name}</Text>
+              <Box />
               {viewSettings.showNicknames && <Text fontWeight="bold">{t('tracker.nickname_header')}</Text>}
               <Text fontWeight="bold">{t('tracker.status_header')}</Text>
               {isSoullink && (
               <>
                   <Text fontWeight="bold" textAlign="center" whiteSpace="nowrap">{t('tracker.pokemon_header')}</Text>
                   <Text fontWeight="bold">{player2Name}</Text>
+                  <Box />
                   {viewSettings.showNicknames && <Text fontWeight="bold">{t('tracker.nickname_header')}</Text>}
                   <Text fontWeight="bold">{t('tracker.status_header')}</Text>
               </>
@@ -411,8 +503,25 @@ function TrackerPage() {
                 gap={4}
                 alignItems="center"
                 p={2}
-                sx={{ textDecoration: isFailed ? 'line-through' : 'none', opacity: isFailed ? 0.6 : 1, transition: 'all 0.2s' }}
+                sx={{
+                  textDecoration: isFailed ? 'line-through' : 'none',
+                  bg: isFailed ? 'red.800' : 'transparent',
+                  color: isFailed ? 'whiteAlpha.900' : 'inherit',
+                  transition: 'background-color 0.2s',
+                  borderRadius: "md"
+                }}
               >
+                <Tooltip label="Begegnung zurücksetzen" fontSize="md">
+                  <IconButton
+                    aria-label="Begegnung zurücksetzen"
+                    icon={<FaTrashRestore />}
+                    size="xs"
+                    variant="ghost"
+                    colorScheme="red"
+                    onClick={() => handleClearEncounter(encounter)}
+                  />
+                </Tooltip>
+
                 <Text>{(i18n.language === 'de' && encounter.locationName_de) ? encounter.locationName_de : encounter.locationName_en}</Text>
                 <VStack spacing={1}>
                   <PokemonSprite pokemonId={encounter.pokemonId1} onClick={() => handleSpriteClick(encounter.pokemonId1)} />
@@ -425,13 +534,25 @@ function TrackerPage() {
                   playerContext={1}
                   player1CaughtChains={player1CaughtChains}
                   player2CaughtChains={player2CaughtChains}
-                  isDisabled={false}
                 />
+                <Box>
+                  {encounter.pokemonId1 && (
+                    <Tooltip label="Entwickeln" fontSize="md">
+                      <IconButton
+                        aria-label="Pokémon entwickeln"
+                        icon={<FaArrowUp />}
+                        size="xs"
+                        variant="outline"
+                        colorScheme="green"
+                        onClick={() => handleEvolve(encounter, 1)}
+                      />
+                    </Tooltip>
+                  )}
+                </Box>
                 {viewSettings.showNicknames && (
                   <Input placeholder="Nickname" value={encounter.nickname1 || ''} onChange={(e) => handleFieldChange(index, 'nickname1', e.target.value)} />
                 )}
-                {/* KORREKTUR HIER */}
-                {encounter.status1 === 'pending' ? <Box /> : <StatusButtonGroup currentStatus={encounter.status1} onChange={(newStatus) => handleFieldChange(index, 'status1', newStatus)} />}
+                {encounter.status1 === 'pending' || encounter.status1 === 'gift' ? <Box /> : <StatusButtonGroup currentStatus={encounter.status1} onChange={(newStatus) => handleFieldChange(index, 'status1', newStatus)} />}
                 
                 {isSoullink && (
                   <>
@@ -446,13 +567,25 @@ function TrackerPage() {
                       playerContext={2}
                       player1CaughtChains={player1CaughtChains}
                       player2CaughtChains={player2CaughtChains}
-                      isDisabled={false}
                     />
+                    <Box>
+                      {encounter.pokemonId2 && (
+                        <Tooltip label="Entwickeln" fontSize="md">
+                          <IconButton
+                            aria-label="Pokémon entwickeln"
+                            icon={<FaArrowUp />}
+                            size="xs"
+                            variant="outline"
+                            colorScheme="green"
+                            onClick={() => handleEvolve(encounter, 2)}
+                          />
+                        </Tooltip>
+                      )}
+                    </Box>
                     {viewSettings.showNicknames && (
                       <Input placeholder="Nickname" value={encounter.nickname2 || ''} onChange={(e) => handleFieldChange(index, 'nickname2', e.target.value)} />
                     )}
-                    {/* KORREKTUR HIER */}
-                    {encounter.status2 === 'pending' ? <Box /> : <StatusButtonGroup currentStatus={encounter.status2} onChange={(newStatus) => handleFieldChange(index, 'status2', newStatus)} />}
+                    {encounter.status2 === 'pending' || encounter.status2 === 'gift' ? <Box /> : <StatusButtonGroup currentStatus={encounter.status2} onChange={(newStatus) => handleFieldChange(index, 'status2', newStatus)} />}
                   </>
                 )}
               </Grid>
