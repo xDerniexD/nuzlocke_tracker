@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -27,36 +27,40 @@ function TeambuilderPage() {
   const [box, setBox] = useState([]);
   const [fainted, setFainted] = useState([]);
   const [missed, setMissed] = useState([]);
+  
+  const [saveStatus, setSaveStatus] = useState('saved');
 
-  // States und Logik für die Header-UI, um Konsistenz zu gewährleisten
   const { isOpen: isRulesOpen, onOpen: onRulesOpen, onClose: onRulesClose } = useDisclosure();
   const [rules, setRules] = useState({ dupesClause: true, shinyClause: true, customRules: '' });
   const [viewSettings, setViewSettings] = useState({ showNicknames: true, showStatic: true, showGift: true });
   const { onCopy, hasCopied } = useClipboard(run?.inviteCode || '');
-  const [saveStatus, setSaveStatus] = useState('saved');
+
+  const saveTeam = useCallback(async (newTeam) => {
+      setSaveStatus('saving');
+      try {
+          const teamEncounterIds = newTeam.map(p => p.pairId);
+          await api.put(`/nuzlockes/${id}/team`, { teamEncounterIds });
+          setSaveStatus('saved');
+      } catch (err) {
+          toast({ title: "Fehler beim Speichern des Teams.", status: "error", duration: 3000, isClosable: true });
+          setSaveStatus('error');
+      }
+  }, [id, toast]);
 
   const categorizedEncounters = useMemo(() => {
     if (!run) return { available: [], fainted: [], missed: [] };
-
-    const available = [];
-    const fainted = [];
-    const missed = [];
-
+    const available = [], fainted = [], missed = [];
     run.encounters.forEach(enc => {
         const p1 = enc.pokemonId1 ? { pokemonId: enc.pokemonId1, name_de: enc.pokemon1, name_en: enc.pokemon1, nickname: enc.nickname1, types: enc.types1 } : null;
         const p2 = run.type === 'soullink' && enc.pokemonId2 ? { pokemonId: enc.pokemonId2, name_de: enc.pokemon2, name_en: enc.pokemon2, nickname: enc.nickname2, types: enc.types2 } : null;
-
         const pair = { pairId: enc._id, p1, p2 };
-
         if (enc.status1 === 'fainted' || enc.status2 === 'fainted') {
             if (p1 || p2) fainted.push(pair);
         } else if (enc.status1 === 'missed' || enc.status2 === 'missed') {
             missed.push({ ...pair, location: i18n.language === 'de' ? enc.locationName_de : enc.locationName_en });
         } else if ((enc.status1 === 'caught' || enc.status1 === 'gift') && p1) {
             if (run.type === 'soullink') {
-                if ((enc.status2 === 'caught' || enc.status2 === 'gift') && p2) {
-                    available.push(pair);
-                }
+                if ((enc.status2 === 'caught' || enc.status2 === 'gift') && p2) available.push(pair);
             } else {
                 available.push(pair);
             }
@@ -66,11 +70,15 @@ function TeambuilderPage() {
   }, [run, i18n.language]);
   
   useEffect(() => {
-    const teamIds = new Set(team.map(p => p.pairId));
-    setBox(categorizedEncounters.available.filter(p => !teamIds.has(p.pairId)));
-    setFainted(categorizedEncounters.fainted);
-    setMissed(categorizedEncounters.missed);
-  }, [categorizedEncounters, team]);
+    if(run) {
+        const teamIds = new Set(run.team || []);
+        const teamFromRun = categorizedEncounters.available.filter(p => teamIds.has(p.pairId));
+        setTeam(teamFromRun);
+        setBox(categorizedEncounters.available.filter(p => !teamIds.has(p.pairId)));
+        setFainted(categorizedEncounters.fainted);
+        setMissed(categorizedEncounters.missed);
+    }
+  }, [run, categorizedEncounters]);
 
 
   useEffect(() => {
@@ -78,10 +86,7 @@ function TeambuilderPage() {
       try {
         const response = await api.get(`/nuzlockes/${id}`);
         setRun(response.data);
-        if (response.data.rules) {
-          setRules(response.data.rules);
-        }
-        setTeam([]); // Team zurücksetzen, wenn ein neuer Run geladen wird
+        if (response.data.rules) setRules(response.data.rules);
       } catch (err) {
         setError("Fehler beim Laden der Run-Daten.");
       } finally {
@@ -92,15 +97,18 @@ function TeambuilderPage() {
   }, [id]);
 
   const handlePairClick = (pair, sourceList) => {
+    let newTeam;
     if (sourceList === 'box') {
       if (team.length < 6) {
-        setTeam([...team, pair]);
-        setBox(box.filter(p => p.pairId !== pair.pairId));
+        newTeam = [...team, pair];
+      } else {
+        return; // Team ist voll
       }
     } else {
-      setBox([...box, pair].sort((a, b) => a.p1.pokemonId - b.p1.pokemonId));
-      setTeam(team.filter(p => p.pairId !== pair.pairId));
+      newTeam = team.filter(p => p.pairId !== pair.pairId);
     }
+    setTeam(newTeam);
+    saveTeam(newTeam);
   };
 
   const handleSaveRules = async () => {
@@ -114,7 +122,11 @@ function TeambuilderPage() {
   };
   
   const getSaveStatusIndicator = () => {
-      return <Tag colorScheme="green"><CheckCircleIcon mr={2} />Gespeichert</Tag>;
+    switch (saveStatus) {
+      case 'saving': return <Tag colorScheme="blue"><Spinner size="xs" mr={2} />Speichern...</Tag>;
+      case 'error': return <Tag colorScheme="red">Fehler</Tag>;
+      default: return <Tag colorScheme="green"><CheckCircleIcon mr={2} />Gespeichert</Tag>;
+    }
   };
   
   const teamSlotsUsed = team.length;
@@ -127,26 +139,19 @@ function TeambuilderPage() {
       <Container maxW="container.2xl" py={8}>
         <Flex justifyContent="space-between" alignItems="center" mb={4}>
           <HStack>
-            <Link to="/">
-              <Button leftIcon={<ArrowBackIcon />}>{t('tracker.dashboard_button')}</Button>
-            </Link>
+            <Link to={`/nuzlocke/${id}`}><Button leftIcon={<ArrowBackIcon />}>{t('tracker.dashboard_button')}</Button></Link>
             <Button leftIcon={<FaBook />} onClick={onRulesOpen}>{t('tracker.rules_button')}</Button>
             <Menu closeOnSelect={false}>
-              <MenuButton as={Button} leftIcon={<Icon as={FaCog} />}>
-                {t('tracker.view_button')}
-              </MenuButton>
+              <MenuButton as={Button} leftIcon={<Icon as={FaCog} />}>{t('tracker.view_button')}</MenuButton>
               <MenuList minWidth="240px">
-                <MenuOptionGroup
-                  title={t('settings.show_columns_title')}
-                  type="checkbox"
+                <MenuOptionGroup title={t('settings.show_columns_title')} type="checkbox"
                   value={Object.keys(viewSettings).filter(key => viewSettings[key])}
                   onChange={(values) =>
                     setViewSettings({
                       showNicknames: values.includes('showNicknames'),
                       showStatic: values.includes('showStatic'),
                       showGift: values.includes('showGift'),
-                    })
-                  }
+                    })}
                 >
                   <MenuItemOption value="showNicknames">{t('settings.nickname_column')}</MenuItemOption>
                   <MenuItemOption value="showStatic">{t('settings.static_encounters')}</MenuItemOption>
@@ -160,15 +165,9 @@ function TeambuilderPage() {
             <Heading as="h1" size="lg" textAlign="center">{run?.runName}</Heading>
             {run?.type === 'soullink' && run.inviteCode && (
               <HStack mt={2} p={1.5} pl={3} borderRadius="md" bg="gray.100" _dark={{ bg: 'gray.700' }}>
-                <Text fontSize="sm" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.300' }}>
-                  Invite Code:
-                </Text>
-                <Tag size="lg" colorScheme="purple" fontWeight="bold">
-                  {run.inviteCode}
-                </Tag>
-                <Tooltip label={hasCopied ? "Kopiert!" : "Kopieren"} closeOnClick={false}>
-                  <IconButton aria-label="Invite Code kopieren" icon={<FaCopy />} size="sm" onClick={onCopy} variant="ghost" />
-                </Tooltip>
+                <Text fontSize="sm" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.300' }}>Invite Code:</Text>
+                <Tag size="lg" colorScheme="purple" fontWeight="bold">{run.inviteCode}</Tag>
+                <Tooltip label={hasCopied ? "Kopiert!" : "Kopieren"} closeOnClick={false}><IconButton aria-label="Invite Code kopieren" icon={<FaCopy />} size="sm" onClick={onCopy} variant="ghost" /></Tooltip>
               </HStack>
             )}
           </VStack>
@@ -207,25 +206,19 @@ function TeambuilderPage() {
           
           <Divider />
 
-          {/* NEUER BEREICH: Besiegte Pokémon */}
           <Box>
             <Heading as="h2" size="lg" mb={4}>Besiegte Pokémon</Heading>
             {fainted.length === 0 ? (
               <Text color="gray.500">Keine besiegten Pokémon.</Text>
             ) : (
               <Flex wrap="wrap" gap={4}>
-                {fainted.map(pair => (
-                   <Box key={pair.pairId} opacity={0.6}>
-                     <PokemonPairCard pair={pair} />
-                   </Box>
-                ))}
+                {fainted.map(pair => (<Box key={pair.pairId} opacity={0.6}><PokemonPairCard pair={pair} /></Box>))}
               </Flex>
             )}
           </Box>
 
           <Divider />
 
-          {/* NEUER BEREICH: Verpasste Begegnungen */}
           <Box>
             <Heading as="h2" size="lg" mb={4}>Verpasste Begegnungen</Heading>
             {missed.length === 0 ? (
@@ -234,24 +227,17 @@ function TeambuilderPage() {
               <Flex wrap="wrap" gap={4}>
                 {missed.map(pair => {
                   if (pair.p1 || pair.p2) {
-                    return (
-                      <Box key={pair.pairId} opacity={0.6}>
-                        <PokemonPairCard pair={pair} />
-                      </Box>
-                    );
+                    return (<Box key={pair.pairId} opacity={0.6}><PokemonPairCard pair={pair} /></Box>);
                   }
                   return (
                     <Box key={pair.pairId} p={3} borderWidth={1} borderRadius="lg" bg="gray.100" _dark={{ bg: 'gray.700' }} minH="125px" minW="120px" display="flex" alignItems="center" justifyContent="center" opacity={0.6}>
-                        <Tooltip label={pair.location}>
-                           <Text fontSize="sm" color="gray.500" noOfLines={3} textAlign="center">{pair.location}</Text>
-                        </Tooltip>
+                        <Tooltip label={pair.location}><Text fontSize="sm" color="gray.500" noOfLines={3} textAlign="center">{pair.location}</Text></Tooltip>
                     </Box>
                   );
                 })}
               </Flex>
             )}
           </Box>
-
         </VStack>
       </Container>
 
@@ -262,30 +248,12 @@ function TeambuilderPage() {
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
-              <FormControl>
-                <Checkbox isChecked={rules?.dupesClause} onChange={(e) => setRules({...rules, dupesClause: e.target.checked})}>
-                  {t('rules.dupes_clause')}
-                </Checkbox>
-              </FormControl>
-              <FormControl>
-                <Checkbox isChecked={rules?.shinyClause} onChange={(e) => setRules({...rules, shinyClause: e.target.checked})}>
-                  {t('rules.shiny_clause')}
-                </Checkbox>
-              </FormControl>
-              <FormControl>
-                <FormLabel>{t('rules.custom_rules_label')}</FormLabel>
-                <Textarea value={rules?.customRules} onChange={(e) => setRules({...rules, customRules: e.target.value})} placeholder={t('rules.custom_rules_placeholder')} />
-              </FormControl>
+              <FormControl><Checkbox isChecked={rules?.dupesClause} onChange={(e) => setRules({...rules, dupesClause: e.target.checked})}>{t('rules.dupes_clause')}</Checkbox></FormControl>
+              <FormControl><Checkbox isChecked={rules?.shinyClause} onChange={(e) => setRules({...rules, shinyClause: e.target.checked})}>{t('rules.shiny_clause')}</Checkbox></FormControl>
+              <FormControl><FormLabel>{t('rules.custom_rules_label')}</FormLabel><Textarea value={rules?.customRules} onChange={(e) => setRules({...rules, customRules: e.target.value})} placeholder={t('rules.custom_rules_placeholder')} /></FormControl>
             </VStack>
           </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onRulesClose}>
-              {t('rules.close_button')}
-            </Button>
-            <Button colorScheme="blue" onClick={handleSaveRules}>
-              {t('rules.save_button')}
-            </Button>
-          </ModalFooter>
+          <ModalFooter><Button variant="ghost" mr={3} onClick={onRulesClose}>{t('rules.close_button')}</Button><Button colorScheme="blue" onClick={handleSaveRules}>{t('rules.save_button')}</Button></ModalFooter>
         </ModalContent>
       </Modal>
     </>

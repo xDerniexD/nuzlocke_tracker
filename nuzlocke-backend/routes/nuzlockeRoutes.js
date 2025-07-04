@@ -234,5 +234,31 @@ router.put('/:id/reorder', protect, async (req, res) => {
     }
 });
 
+router.put('/:id/team', protect, async (req, res) => {
+    try {
+        const { teamEncounterIds } = req.body;
+        if (!Array.isArray(teamEncounterIds)) {
+            return res.status(400).json({ message: 'Ungültige Team-Daten.' });
+        }
+
+        const nuzlocke = await Nuzlocke.findById(req.params.id);
+        if (!nuzlocke) {
+            return res.status(404).json({ message: 'Nuzlocke-Run nicht gefunden.' });
+        }
+
+        const isParticipant = nuzlocke.participants.some(p => p._id.toString() === req.user._id.toString());
+        if (!isParticipant) {
+            return res.status(401).json({ message: 'Nicht autorisiert.' });
+        }
+
+        nuzlocke.team = teamEncounterIds;
+        await nuzlocke.save();
+
+        res.json({ message: 'Team erfolgreich gespeichert.', team: nuzlocke.team });
+    } catch (error) {
+        console.error("Fehler beim Speichern des Teams:", error);
+        res.status(500).json({ message: 'Serverfehler beim Speichern des Teams.' });
+    }
+});
 
 module.exports = router;

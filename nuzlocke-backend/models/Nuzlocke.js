@@ -4,11 +4,11 @@ const encounterSchema = new mongoose.Schema({
   locationName_de: { type: String, required: true },
   locationName_en: { type: String, required: true },
   sequence: { type: Number },
-  encounterType: {
-    type: String,
-    required: true,
-    enum: ['standard', 'static', 'gift', 'event'],
-    default: 'standard'
+  encounterType: { 
+    type: String, 
+    required: true, 
+    enum: ['standard', 'static', 'gift', 'event'], 
+    default: 'standard' 
   },
   levelCap: { type: Number, default: null },
   badgeImage: { type: String, default: null },
@@ -38,13 +38,14 @@ const nuzlockeSchema = new mongoose.Schema({
   type: { type: String, required: true, enum: ['solo', 'soullink'], default: 'solo' },
   isArchived: { type: Boolean, default: false },
   inviteCode: { type: String, unique: true, sparse: true },
-  // NEU: Einzigartige ID für den Lesezugriff
   spectatorId: { type: String, unique: true, sparse: true },
   rules: {
     dupesClause: { type: Boolean, default: true },
     shinyClause: { type: Boolean, default: true },
     customRules: { type: String, default: '' },
   },
+  // NEU: Ein Array, das die Encounter-IDs des Teams speichert
+  team: [{ type: mongoose.Schema.Types.ObjectId }],
   encounters: [encounterSchema] 
 }, {
   timestamps: true
