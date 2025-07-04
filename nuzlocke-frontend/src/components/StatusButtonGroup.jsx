@@ -1,9 +1,7 @@
 import React from 'react';
-import { Button, HStack, Icon } from '@chakra-ui/react';
-// Wir importieren passende Icons von react-icons
+import { Button, HStack, Icon, Tooltip } from '@chakra-ui/react';
 import { FaCheck, FaHeartBroken, FaTimes, FaGift } from 'react-icons/fa';
 
-// Wir definieren unsere Status-Optionen jetzt mit Icons
 const statusOptions = [
   { value: 'caught', label: 'Gefangen', color: 'green', icon: FaCheck },
   { value: 'gift', label: 'Geschenk', color: 'yellow', icon: FaGift },
@@ -11,28 +9,48 @@ const statusOptions = [
   { value: 'missed', label: 'Verpasst', color: 'blue', icon: FaTimes },
 ];
 
-function StatusButtonGroup({ currentStatus, onChange }) {
-  // Wenn der aktuelle Status 'pending' ist, zeigen wir keine Buttons an.
-  // Das Feld bleibt dann leer, bis ein Pokémon eingetragen wird.
+function StatusButtonGroup({ currentStatus, onStatusChange, faintReason }) {
   if (currentStatus === 'pending') {
-    return null; // Zeigt nichts an
+    return null;
   }
   
+  const faintedButton = statusOptions.find(opt => opt.value === 'fainted');
+
   return (
     <HStack spacing={1}>
-      {statusOptions.map(({ value, label, color, icon }) => (
-        <Button
-          key={value}
-          size="sm"
-          colorScheme={currentStatus === value ? color : 'gray'}
-          variant={currentStatus === value ? 'solid' : 'outline'}
-          onClick={() => onChange(value)}
-          title={label} // Der volle Name wird im Tooltip angezeigt
-        >
-          {/* Anstelle von Buchstaben verwenden wir jetzt die Icons */}
-          <Icon as={icon} />
-        </Button>
-      ))}
+      {statusOptions.map(({ value, label, color, icon }) => {
+        const isSelected = currentStatus === value;
+        
+        // Spezielle Logik für den "Besiegt"-Button mit Tooltip
+        if (value === 'fainted' && faintReason) {
+            return (
+                 <Tooltip key={value} label={`Grund: ${faintReason}`} placement="top" hasArrow>
+                    <Button
+                        size="sm"
+                        colorScheme={isSelected ? color : 'gray'}
+                        variant={isSelected ? 'solid' : 'outline'}
+                        onClick={() => onStatusChange(value)}
+                        title={label}
+                    >
+                        <Icon as={icon} />
+                    </Button>
+                </Tooltip>
+            )
+        }
+
+        return (
+            <Button
+                key={value}
+                size="sm"
+                colorScheme={isSelected ? color : 'gray'}
+                variant={isSelected ? 'solid' : 'outline'}
+                onClick={() => onStatusChange(value)}
+                title={label}
+            >
+                <Icon as={icon} />
+            </Button>
+        );
+      })}
     </HStack>
   );
 }

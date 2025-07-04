@@ -8,9 +8,10 @@ import {
   HStack, IconButton, Switch, FormControl, FormLabel,
   AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader,
   AlertDialogContent, AlertDialogOverlay, useDisclosure, useToast,
-  Grid, Tooltip, Radio, RadioGroup
+  Grid, Tooltip, Radio, RadioGroup, Modal, ModalOverlay, ModalContent,
+  ModalHeader, ModalCloseButton, ModalBody, ModalFooter, useClipboard,
 } from '@chakra-ui/react';
-import { MdPlayArrow, MdDelete, MdArchive, MdUnarchive, MdPeople } from 'react-icons/md';
+import { MdPlayArrow, MdDelete, MdArchive, MdUnarchive, MdPeople, MdShare } from 'react-icons/md';
 
 function DashboardPage({ user, onLogout }) {
   const { t } = useTranslation();
@@ -24,13 +25,17 @@ function DashboardPage({ user, onLogout }) {
   const [newRunName, setNewRunName] = useState('');
   const [selectedGame, setSelectedGame] = useState('platinum');
   const [runType, setRunType] = useState('solo');
-  const [inviteCode, setInviteCode] = useState('');
+  const [inviteCodeInput, setInviteCodeInput] = useState(''); // Umbenannt, um Konflikte zu vermeiden
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
 
-  // KORREKTUR: Variablen für den Lösch-Dialog umbenannt
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  // NEU: States für das Einladungs-Modal
+  const { isOpen: isInviteOpen, onOpen: onInviteOpen, onClose: onInviteClose } = useDisclosure();
+  const [runToInvite, setRunToInvite] = useState(null);
+  const { onCopy, setValue, hasCopied } = useClipboard("");
+
   const [runToDelete, setRunToDelete] = useState(null);
   const cancelRef = useRef();
 
@@ -42,7 +47,6 @@ function DashboardPage({ user, onLogout }) {
         if (Array.isArray(response.data)) {
           setRuns(response.data);
         } else {
-          console.error("API hat kein Array für Runs zurückgegeben:", response.data);
           setRuns([]); 
         }
       } catch (err) {
@@ -65,15 +69,9 @@ function DashboardPage({ user, onLogout }) {
       const response = await api.post('/nuzlockes', { runName: newRunName, game: selectedGame, type: runType });
       const newRun = response.data;
       if (newRun.type === 'soullink' && newRun.inviteCode) {
-        toast({
-          title: "Soullink-Run erfolgreich erstellt!",
-          description: `Dein Invite Code ist: ${newRun.inviteCode}`,
-          status: "success",
-          duration: 9000,
-          isClosable: true,
-        });
         setRuns(prevRuns => [...prevRuns, newRun]);
         setNewRunName('');
+        handleInviteClick(newRun); // NEU: Öffnet direkt das Invite-Modal
       } else {
         navigate(`/nuzlocke/${newRun._id}`);
       }
@@ -86,21 +84,28 @@ function DashboardPage({ user, onLogout }) {
   
   const handleJoinRun = async (event) => {
     event.preventDefault();
-    if (!inviteCode) return;
+    if (!inviteCodeInput) return;
     setIsJoining(true);
     try {
-        const response = await api.post('/nuzlockes/join', { inviteCode: inviteCode.trim() });
+        const response = await api.post('/nuzlockes/join', { inviteCode: inviteCodeInput.trim() });
         const joinedRun = response.data;
         toast({ title: "Erfolgreich beigetreten!", description: `Du bist jetzt Teil von "${joinedRun.runName}".`, status: "success", duration: 5000, isClosable: true });
         if (joinedRun && joinedRun._id) {
           setRuns(prevRuns => [...prevRuns, joinedRun]);
         }
-        setInviteCode('');
+        setInviteCodeInput('');
     } catch (err) {
         toast({ title: "Beitritt fehlgeschlagen", description: err.response?.data?.message || t('dashboard.join_error'), status: "error", duration: 5000, isClosable: true });
     } finally {
         setIsJoining(false);
     }
+  };
+  
+  // NEU: Funktion, um das Invite-Modal zu öffnen
+  const handleInviteClick = (run) => {
+    setRunToInvite(run);
+    setValue(run.inviteCode); // Setzt den Wert, der kopiert werden soll
+    onInviteOpen();
   };
 
   const handleDeleteClick = (runId) => {
@@ -182,7 +187,7 @@ function DashboardPage({ user, onLogout }) {
                 <Heading as="h2" size="md" mb={4}>{t('dashboard.join_soullink_header')}</Heading>
                 <form onSubmit={handleJoinRun}>
                     <VStack spacing={4}>
-                        <Input placeholder={t('dashboard.join_placeholder')} value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
+                        <Input placeholder={t('dashboard.join_placeholder')} value={inviteCodeInput} onChange={(e) => setInviteCodeInput(e.target.value)} />
                         <Button type="submit" colorScheme="purple" width="100%" isLoading={isJoining}>{t('dashboard.join_button')}</Button>
                     </VStack>
                 </form>
@@ -224,6 +229,18 @@ function DashboardPage({ user, onLogout }) {
                       </Flex>
                   </Link>
                   <HStack>
+                      {/* NEU: Button zum Anzeigen des Invite-Codes */}
+                      {run.type === 'soullink' && run.inviteCode && (
+                        <Tooltip label="Partner einladen">
+                            <IconButton
+                                aria-label="Partner einladen"
+                                icon={<MdShare />}
+                                variant="ghost"
+                                colorScheme="purple"
+                                onClick={() => handleInviteClick(run)}
+                            />
+                        </Tooltip>
+                      )}
                       <Tooltip label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')}>
                           <IconButton
                               aria-label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')}
@@ -248,6 +265,27 @@ function DashboardPage({ user, onLogout }) {
           )}
         </Box>
       </Box>
+
+      {/* NEU: Modal zum Anzeigen des Invite-Codes */}
+      <Modal isOpen={isInviteOpen} onClose={onInviteClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+            <ModalHeader>Partner einladen</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+                <Text mb={2}>Gib diesen Code an deinen Soullink-Partner, damit er oder sie beitreten kann:</Text>
+                <Flex>
+                    <Input value={runToInvite?.inviteCode || ''} isReadOnly fontSize="lg" fontWeight="bold" textAlign="center" />
+                    <Button onClick={onCopy} ml={2}>
+                        {hasCopied ? 'Kopiert!' : 'Kopieren'}
+                    </Button>
+                </Flex>
+            </ModalBody>
+            <ModalFooter>
+                <Button colorScheme="blue" onClick={onInviteClose}>Schließen</Button>
+            </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <AlertDialog
         isOpen={isDeleteOpen}

@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import RegisterPage from './pages/RegisterPage';
 import TrackerPage from './pages/TrackerPage';
 import TeambuilderPage from './pages/TeambuilderPage';
+import SpectatorPage from './pages/SpectatorPage'; // NEU
 import Navbar from './components/Navbar'; 
 
 import './App.css';
@@ -60,6 +61,12 @@ function App() {
           <Route 
             path="/register" 
             element={user ? <Navigate to="/" /> : <RegisterPage />} 
+          />
+
+          {/* NEU: Route für die Zuschauer-Seite */}
+          <Route 
+            path="/spectate/:spectatorId"
+            element={<SpectatorPage />}
           />
 
           <Route 

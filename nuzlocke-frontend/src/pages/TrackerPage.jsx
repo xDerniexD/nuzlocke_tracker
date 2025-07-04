@@ -1,7 +1,27 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api/api';
+
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
+
+
 import PokemonSprite from '../components/PokemonSprite';
 import AutocompleteInput from '../components/AutocompleteInput';
 import StatusButtonGroup from '../components/StatusButtonGroup';
@@ -11,16 +31,92 @@ import SubNav from '../components/SubNav';
 import {
   Box, Button, Container, Flex, Heading, Spinner, Alert,
   AlertIcon, Grid, Text, Input, Select, useToast, Tag, HStack,
-  CheckboxGroup, Checkbox, Stack, Divider, Icon, Image,
+  CheckboxGroup, Checkbox, Stack, Divider, Icon,
   VStack, StackDivider, useDisclosure,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter,
   ModalBody, ModalCloseButton, FormControl, FormLabel, Textarea,
   Menu, MenuButton, MenuList, MenuItemOption, MenuOptionGroup,
-  useClipboard, Tooltip, IconButton
+  useClipboard, Tooltip, IconButton, Center
 } from '@chakra-ui/react';
-import { ArrowBackIcon, CheckCircleIcon, TimeIcon } from '@chakra-ui/icons';
-import { FaShieldAlt, FaBook, FaCog, FaCopy, FaTrashRestore, FaArrowUp, FaBullseye } from 'react-icons/fa';
+import { ArrowBackIcon, CheckCircleIcon } from '@chakra-ui/icons';
+import { FaShieldAlt, FaBook, FaCog, FaCopy, FaTrashRestore, FaArrowUp, FaBullseye, FaGripLines, FaShareAlt } from 'react-icons/fa';
 import io from 'socket.io-client';
+
+function SortableEncounterRow({ encounter, ...props }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: encounter._id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 'auto',
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <Box ref={setNodeRef} style={style} w="full">
+      <EncounterRow encounter={encounter} isDragging={isDragging} dragHandleProps={{...attributes, ...listeners}} {...props} />
+    </Box>
+  );
+}
+
+function EncounterRow({ encounter, isSoullink, gridTemplateColumns, viewSettings, t, i18n, player1Name, player2Name, dragHandleProps, ...handlers }) {
+    if (encounter.encounterType === 'event') {
+        return (
+            <Flex key={encounter._id.toString()} align="center" justify="center" py={3} bg="gray.100" _dark={{ bg: 'gray.700' }}>
+                <Icon as={FaShieldAlt} mr={3} color="blue.500" />
+                <Text fontWeight="bold">{i18n.language === 'de' && encounter.locationName_de ? encounter.locationName_de : encounter.locationName_en}</Text>
+                <Text ml={2} color="gray.500" _dark={{color: "gray.400"}}> - {t('tracker.level_cap')}: {encounter.levelCap}</Text>
+            </Flex>
+        );
+    }
+    
+    const isFailed = encounter.status1 === 'fainted' || encounter.status1 === 'missed' || (isSoullink && (encounter.status2 === 'fainted' || encounter.status2 === 'missed'));
+
+    return (
+        <Grid
+            templateColumns={gridTemplateColumns}
+            gap={4}
+            alignItems="center"
+            p={2}
+            bg={isFailed ? 'red.800' : 'transparent'}
+            _dark={{ bg: isFailed ? 'red.800' : 'transparent' }}
+            sx={{ textDecoration: isFailed ? 'line-through' : 'none', color: isFailed ? 'whiteAlpha.900' : 'inherit', transition: 'background-color 0.2s', borderRadius: "md" }}
+        >
+            <Tooltip label={handlers.isSortable ? "Ziehen zum Verschieben" : "Sortierung ändern zum Verschieben"} isDisabled={handlers.isSortable}>
+                <Center {...dragHandleProps} cursor={handlers.isSortable ? 'grab' : 'not-allowed'}>
+                    <Icon as={FaGripLines} color={handlers.isSortable ? 'gray.400' : 'gray.700'} />
+                </Center>
+            </Tooltip>
+
+            <Tooltip label="Begegnung zurücksetzen" fontSize="md">
+                <IconButton aria-label="Begegnung zurücksetzen" icon={<FaTrashRestore />} size="xs" variant="ghost" colorScheme="red" onClick={() => handlers.handleClearEncounter(encounter)}/>
+            </Tooltip>
+            <Text>{i18n.language === 'de' && encounter.locationName_de ? encounter.locationName_de : encounter.locationName_en}</Text>
+            <VStack spacing={1}><PokemonSprite pokemonId={encounter.pokemonId1} onClick={() => handlers.handleSpriteClick(encounter.pokemonId1)} /><TypeIcons types={encounter.types1} /></VStack>
+            <AutocompleteInput initialValue={encounter.pokemon1 || ''} onPokemonSelect={(p) => handlers.handlePokemonSelect(encounter._id, 1, p)} isDupesClauseActive={handlers.rules?.dupesClause} playerContext={1} player1CaughtChains={handlers.player1CaughtChains} player2CaughtChains={handlers.player2CaughtChains}/>
+            <Box>{encounter.pokemonId1 && (<Tooltip label="Entwickeln" fontSize="md"><IconButton aria-label="Pokémon entwickeln" icon={<FaArrowUp />} size="xs" variant="outline" colorScheme="green" onClick={() => handlers.handleEvolve(encounter, 1)}/></Tooltip>)}</Box>
+            {viewSettings.showNicknames && (<Input placeholder="Nickname" value={encounter.nickname1 || ''} onChange={(e) => handlers.handleFieldChange(encounter._id, 'nickname1', e.target.value)} />)}
+            <StatusButtonGroup currentStatus={encounter.status1} onStatusChange={(newStatus) => handlers.handleStatusChangeAttempt(encounter._id, 1, newStatus)} faintReason={encounter.faintReason1}/>
+            
+            {isSoullink && (
+            <>
+                <VStack spacing={1}><PokemonSprite pokemonId={encounter.pokemonId2} onClick={() => handlers.handleSpriteClick(encounter.pokemonId2)} /><TypeIcons types={encounter.types2} /></VStack>
+                <AutocompleteInput initialValue={encounter.pokemon2 || ''} onPokemonSelect={(p) => handlers.handlePokemonSelect(encounter._id, 2, p)} isDupesClauseActive={handlers.rules?.dupesClause} playerContext={2} player1CaughtChains={handlers.player1CaughtChains} player2CaughtChains={handlers.player2CaughtChains}/>
+                <Box>{encounter.pokemonId2 && (<Tooltip label="Entwickeln" fontSize="md"><IconButton aria-label="Pokémon entwickeln" icon={<FaArrowUp />} size="xs" variant="outline" colorScheme="green" onClick={() => handlers.handleEvolve(encounter, 2)}/></Tooltip>)}</Box>
+                {viewSettings.showNicknames && (<Input placeholder="Nickname" value={encounter.nickname2 || ''} onChange={(e) => handlers.handleFieldChange(encounter._id, 'nickname2', e.target.value)} />)}
+                <StatusButtonGroup currentStatus={encounter.status2} onStatusChange={(newStatus) => handlers.handleStatusChangeAttempt(encounter._id, 2, newStatus)} faintReason={encounter.faintReason2}/>
+            </>
+            )}
+        </Grid>
+    );
+}
 
 function TrackerPage() {
   const { id } = useParams();
@@ -38,6 +134,8 @@ function TrackerPage() {
 
   const { isOpen: isRulesOpen, onOpen: onRulesOpen, onClose: onRulesClose } = useDisclosure();
   const { isOpen: isDetailOpen, onOpen: onDetailOpen, onClose: onDetailClose } = useDisclosure();
+  const { isOpen: isFaintModalOpen, onOpen: onFaintModalOpen, onClose: onFaintModalClose } = useDisclosure();
+  const { isOpen: isShareOpen, onOpen: onShareOpen, onClose: onShareClose } = useDisclosure();
 
   const [rules, setRules] = useState({ dupesClause: true, shinyClause: true, customRules: '' });
   
@@ -49,8 +147,13 @@ function TrackerPage() {
   
   const [selectedPokemonDetails, setSelectedPokemonDetails] = useState(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [faintContext, setFaintContext] = useState(null);
+  const [selectedFaintReason, setSelectedFaintReason] = useState('');
 
   const { onCopy, hasCopied } = useClipboard(run?.inviteCode || '');
+  const spectatorLink = `${window.location.origin}/spectate/${run?.spectatorId}`;
+  const { onCopy: onCopyLink, hasCopied: hasCopiedLink } = useClipboard(spectatorLink);
+  
   const [sortBy, setSortBy] = useState('default');
   
   const filterOptions = useMemo(() => [
@@ -61,8 +164,56 @@ function TrackerPage() {
     { value: 'missed', label: t('tracker.filter_missed') },
   ], [t]);
 
+  const faintReasonOptions = useMemo(() => [
+      { value: 'Wilder Kampf', label: 'Wilder Kampf' },
+      { value: 'Trainer Kampf', label: 'Trainer Kampf' },
+      { value: 'Arena Kampf', label: 'Arena Kampf' },
+      { value: 'Dummheit', label: 'Dummheit' }
+  ], []);
+
   const [filterBy, setFilterBy] = useState(filterOptions.map(f => f.value));
   const [displayedEncounters, setDisplayedEncounters] = useState([]);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+        coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+    
+    const handleDragEnd = useCallback(async (event) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) {
+            return;
+        }
+
+        setDisplayedEncounters((items) => {
+            const oldIndex = items.findIndex(item => item._id === active.id);
+            const newIndex = items.findIndex(item => item._id === over.id);
+            return arrayMove(items, oldIndex, newIndex);
+        });
+
+        const newOrderedList = arrayMove(displayedEncounters, displayedEncounters.findIndex(item => item._id === active.id), displayedEncounters.findIndex(item => item._id === over.id));
+        const payload = newOrderedList.map((enc, index) => ({ _id: enc._id, sequence: index + 1 }));
+
+        setSaveStatus('saving');
+        try {
+            await api.put(`/nuzlockes/${id}/reorder`, { reorderedEncounters: payload });
+            setRun(prevRun => ({
+                ...prevRun,
+                encounters: prevRun.encounters.map(enc => {
+                    const updated = payload.find(p => p._id === enc._id);
+                    return updated ? { ...enc, sequence: updated.sequence } : enc;
+                }).sort((a,b) => (a.sequence || 999) - (b.sequence || 999))
+            }));
+            setSaveStatus('saved');
+            toast({ title: "Reihenfolge gespeichert!", status: "success", duration: 2000, isClosable: true });
+        } catch (error) {
+            toast({ title: "Fehler beim Speichern der Reihenfolge", status: "error", duration: 3000, isClosable: true });
+            setSaveStatus('saved');
+        }
+    }, [displayedEncounters, id, toast]);
+
 
   useEffect(() => {
     const userFromStorage = JSON.parse(localStorage.getItem('user'));
@@ -145,7 +296,7 @@ function TrackerPage() {
   
   const gridTemplateColumns = useMemo(() => {
     if (!run) return '';
-    const columns = ['40px', '2fr', '80px', '1.5fr', '50px'];
+    const columns = ['30px', '40px', '2fr', '80px', '1.5fr', '50px'];
     if (viewSettings.showNicknames) { columns.push('1.5fr'); }
     columns.push('1.5fr');
 
@@ -218,23 +369,30 @@ function TrackerPage() {
     }
   }, [id, toast]);
 
-  const handleFieldChange = (index, field, value) => {
-    const encounter = displayedEncounters[index];
-    if (!encounter) return;
-    const updatedEncounter = { ...encounter, [field]: value };
+  const handleFieldChange = (encounterId, field, value) => {
+    const originalEncounter = run.encounters.find(e => e._id === encounterId);
+    if (!originalEncounter) return;
+
+    const updatedEncounter = { ...originalEncounter, [field]: value };
     
-    setRun(prevRun => ({
-      ...prevRun,
-      encounters: prevRun.encounters.map(e => e._id === encounter._id ? updatedEncounter : e)
-    }));
-    
+    setRun(prevRun => ({ ...prevRun, encounters: prevRun.encounters.map(e => e._id === encounterId ? updatedEncounter : e) }));
     saveEncounterChange(updatedEncounter);
   };
 
-  const handlePokemonSelect = (index, player, selectedPokemon) => {
-    const encounter = displayedEncounters[index];
-    if (!encounter) return;
+  const handleMultiFieldChange = (encounterId, changes) => {
+    const originalEncounter = run.encounters.find(e => e._id === encounterId);
+    if (!originalEncounter) return;
+
+    const updatedEncounter = { ...originalEncounter, ...changes };
     
+    setRun(prevRun => ({ ...prevRun, encounters: prevRun.encounters.map(e => e._id === encounterId ? updatedEncounter : e) }));
+    saveEncounterChange(updatedEncounter);
+  };
+  
+  const handlePokemonSelect = (encounterId, player, selectedPokemon) => {
+    const encounter = run.encounters.find(e => e._id === encounterId);
+    if (!encounter) return;
+
     const displayName = (i18n.language === 'de' && selectedPokemon.name_de) ? selectedPokemon.name_de : selectedPokemon.name_en;
     let changes = {};
 
@@ -250,46 +408,54 @@ function TrackerPage() {
       }
     }
     
-    const updatedEncounter = { ...encounter, ...changes };
-
-    setRun(prevRun => ({
-      ...prevRun,
-      encounters: prevRun.encounters.map(e => e._id === encounter._id ? updatedEncounter : e)
-    }));
-
-    saveEncounterChange(updatedEncounter);
+    handleMultiFieldChange(encounterId, changes);
   };
-  
+    
+  const handleStatusChangeAttempt = (encounterId, player, newStatus) => {
+    if (newStatus === 'fainted') {
+        setFaintContext({ encounterId, player });
+        setSelectedFaintReason(faintReasonOptions[0].value);
+        onFaintModalOpen();
+    } else {
+        const statusField = `status${player}`;
+        const reasonField = `faintReason${player}`;
+        handleMultiFieldChange(encounterId, {[statusField]: newStatus, [reasonField]: null});
+    }
+  };
+
+  const handleConfirmFaint = () => {
+    if (!faintContext) return;
+    const { encounterId, player } = faintContext;
+    handleMultiFieldChange(encounterId, {
+        [`status${player}`]: 'fainted',
+        [`faintReason${player}`]: selectedFaintReason,
+    });
+    onFaintModalClose();
+    setFaintContext(null);
+  };
+
   const handleClearEncounter = (encounterToClear) => {
     if (!encounterToClear) return;
     const clearedEncounter = {
       ...encounterToClear,
-      pokemon1: null,
-      pokemonId1: null,
-      types1: [],
-      nickname1: '',
+      pokemon1: null, pokemonId1: null, types1: [], nickname1: '',
       status1: encounterToClear.encounterType === 'gift' ? 'gift' : 'pending',
-      evolutionChainId1: null,
+      evolutionChainId1: null, faintReason1: null,
     };
     if (run.type === 'soullink') {
-      clearedEncounter.pokemon2 = null;
-      clearedEncounter.pokemonId2 = null;
-      clearedEncounter.types2 = [];
-      clearedEncounter.nickname2 = '';
+      clearedEncounter.pokemon2 = null; clearedEncounter.pokemonId2 = null;
+      clearedEncounter.types2 = []; clearedEncounter.nickname2 = '';
       clearedEncounter.status2 = encounterToClear.encounterType === 'gift' ? 'gift' : 'pending';
-      clearedEncounter.evolutionChainId2 = null;
+      clearedEncounter.evolutionChainId2 = null; clearedEncounter.faintReason2 = null;
     }
-    setRun(prevRun => ({
-      ...prevRun,
-      encounters: prevRun.encounters.map(e => e._id === clearedEncounter._id ? clearedEncounter : e)
-    }));
+    
+    setRun(prevRun => ({ ...prevRun, encounters: prevRun.encounters.map(e => e._id === clearedEncounter._id ? clearedEncounter : e) }));
     saveEncounterChange(clearedEncounter);
   };
-  
+
   const handleEvolve = async (encounterToEvolve, player) => {
     const currentPokemonId = player === 1 ? encounterToEvolve.pokemonId1 : encounterToEvolve.pokemonId2;
     if (!currentPokemonId) return;
-
     try {
       const currentPokemonRes = await api.get(`/pokemon/${currentPokemonId}`);
       const currentPokemon = currentPokemonRes.data;
@@ -305,19 +471,14 @@ function TrackerPage() {
       }
       const nextPokemonRes = await api.get(`/pokemon/${nextPokemonId}`);
       const nextPokemon = nextPokemonRes.data;
-      let changes = {};
       const newName = i18n.language === 'de' && nextPokemon.name_de ? nextPokemon.name_de : nextPokemon.name_en;
+      let changes = {};
       if (player === 1) {
-        changes = { pokemon1: newName, pokemonId1: nextPokemon.id, types1: nextPokemon.types, evolutionChainId1: nextPokemon.evolutionChainId };
+        changes = { pokemon1: newName, pokemonId1: nextPokemon.id, types1: nextPokemon.types };
       } else {
-        changes = { pokemon2: newName, pokemonId2: nextPokemon.id, types2: nextPokemon.types, evolutionChainId2: nextPokemon.evolutionChainId };
+        changes = { pokemon2: newName, pokemonId2: nextPokemon.id, types2: nextPokemon.types };
       }
-      const updatedEncounter = { ...encounterToEvolve, ...changes };
-      setRun(prevRun => ({
-        ...prevRun,
-        encounters: prevRun.encounters.map(e => e._id === updatedEncounter._id ? updatedEncounter : e)
-      }));
-      saveEncounterChange(updatedEncounter);
+      handleMultiFieldChange(encounterToEvolve._id, changes);
     } catch (error) {
       toast({ title: "Fehler bei der Entwicklung.", status: "error", duration: 3000 });
     }
@@ -353,12 +514,13 @@ function TrackerPage() {
       default: return <Tag colorScheme="green"><CheckCircleIcon mr={2} />Gespeichert</Tag>;
     }
   };
-  
+
   if (loading) return <Flex justify="center" align="center" height="100vh"><Spinner size="xl" /></Flex>;
   if (error) return <Container mt={10}><Alert status="error"><AlertIcon />{error}</Alert></Container>;
   if (!run) return <Container mt={10}><Text>Run nicht gefunden.</Text></Container>;
 
   const isSoullink = run.type === 'soullink';
+  const isSortable = sortBy === 'default';
   
   return (
     <>
@@ -375,9 +537,7 @@ function TrackerPage() {
                 {t('tracker.view_button')}
               </MenuButton>
               <MenuList minWidth="240px">
-                <MenuOptionGroup
-                  title={t('settings.show_columns_title')}
-                  type="checkbox"
+                <MenuOptionGroup title={t('settings.show_columns_title')} type="checkbox"
                   value={Object.keys(viewSettings).filter(key => viewSettings[key])}
                   onChange={(values) =>
                     setViewSettings({
@@ -393,18 +553,19 @@ function TrackerPage() {
                 </MenuOptionGroup>
               </MenuList>
             </Menu>
+             <Tooltip label="Zuschauer-Link teilen">
+                <Button onClick={onShareOpen} leftIcon={<Icon as={FaShareAlt} />}>
+                    Teilen
+                </Button>
+            </Tooltip>
           </HStack>
           
           <VStack spacing={0}>
             <Heading as="h1" size="lg" textAlign="center">{run.runName}</Heading>
             {run?.type === 'soullink' && run.inviteCode && (
               <HStack mt={2} p={1.5} pl={3} borderRadius="md" bg="gray.100" _dark={{ bg: 'gray.700' }}>
-                <Text fontSize="sm" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.300' }}>
-                  Invite Code:
-                </Text>
-                <Tag size="lg" colorScheme="purple" fontWeight="bold">
-                  {run.inviteCode}
-                </Tag>
+                <Text fontSize="sm" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.300' }}>Invite Code:</Text>
+                <Tag size="lg" colorScheme="purple" fontWeight="bold">{run.inviteCode}</Tag>
                 <Tooltip label={hasCopied ? "Kopiert!" : "Kopieren"} closeOnClick={false}>
                   <IconButton aria-label="Invite Code kopieren" icon={<FaCopy />} size="sm" onClick={onCopy} variant="ghost" />
                 </Tooltip>
@@ -429,151 +590,62 @@ function TrackerPage() {
             <Text fontWeight="bold">{t('tracker.filter_by')}</Text>
             <CheckboxGroup colorScheme="green" value={filterBy} onChange={setFilterBy}>
               <Stack spacing={5} direction="row">
-                {filterOptions.map(option => (
-                  <Checkbox key={option.value} value={option.value}>
-                    {option.label}
-                  </Checkbox>
-                ))}
+                {filterOptions.map(option => (<Checkbox key={option.value} value={option.value}>{option.label}</Checkbox>))}
               </Stack>
             </CheckboxGroup>
           </HStack>
         </HStack>
 
         <VStack spacing={0} align="stretch" borderWidth={1} borderRadius="lg" divider={<StackDivider />}>
-          <Grid
-              templateColumns={gridTemplateColumns}
-              gap={4} alignItems="center" p={4} borderBottomWidth={2} borderColor="gray.300" _dark={{ borderColor: 'gray.600' }}
-          >
-              <Box /> 
-              <Text fontWeight="bold">{t('tracker.location_header')}</Text>
-              <Text fontWeight="bold" textAlign="center" whiteSpace="nowrap">{t('tracker.pokemon_header')}</Text>
-              <Text fontWeight="bold">{player1Name}</Text>
-              <Box />
-              {viewSettings.showNicknames && <Text fontWeight="bold">{t('tracker.nickname_header')}</Text>}
-              <Text fontWeight="bold">{t('tracker.status_header')}</Text>
-              {isSoullink && (
-              <>
-                  <Text fontWeight="bold" textAlign="center" whiteSpace="nowrap">{t('tracker.pokemon_header')}</Text>
-                  <Text fontWeight="bold">{player2Name}</Text>
-                  <Box />
-                  {viewSettings.showNicknames && <Text fontWeight="bold">{t('tracker.nickname_header')}</Text>}
-                  <Text fontWeight="bold">{t('tracker.status_header')}</Text>
-              </>
-              )}
-          </Grid>
-          
-          {displayedEncounters.map((encounter, index) => {
-            if (!encounter) return null;
-            if (encounter.encounterType === 'event') {
-              return (
-                <Flex key={encounter._id || index} align="center" justify="center" py={3} bg="gray.100" _dark={{ bg: 'gray.700' }}>
-                  <Icon as={FaShieldAlt} mr={3} color="blue.500" />
-                  <Text fontWeight="bold">{(i18n.language === 'de' && encounter.locationName_de) ? encounter.locationName_de : encounter.locationName_en}</Text>
-                  <Text ml={2} color="gray.500" _dark={{color: "gray.400"}}> - {t('tracker.level_cap')}: {encounter.levelCap}</Text>
-                </Flex>
-              );
-            }
-            
-            const isFailed = encounter.status1 === 'fainted' || encounter.status1 === 'missed' || (isSoullink && (encounter.status2 === 'fainted' || encounter.status2 === 'missed'));
-            
-            return (
-              <Grid
-                key={encounter._id || index}
-                templateColumns={gridTemplateColumns}
-                gap={4}
-                alignItems="center"
-                p={2}
-                sx={{
-                  textDecoration: isFailed ? 'line-through' : 'none',
-                  bg: isFailed ? 'red.800' : 'transparent',
-                  color: isFailed ? 'whiteAlpha.900' : 'inherit',
-                  transition: 'background-color 0.2s',
-                  borderRadius: "md"
-                }}
-              >
-                <Tooltip label="Begegnung zurücksetzen" fontSize="md">
-                  <IconButton
-                    aria-label="Begegnung zurücksetzen"
-                    icon={<FaTrashRestore />}
-                    size="xs"
-                    variant="ghost"
-                    colorScheme="red"
-                    onClick={() => handleClearEncounter(encounter)}
-                  />
-                </Tooltip>
-
-                <Text>{(i18n.language === 'de' && encounter.locationName_de) ? encounter.locationName_de : encounter.locationName_en}</Text>
-                <VStack spacing={1}>
-                  <PokemonSprite pokemonId={encounter.pokemonId1} onClick={() => handleSpriteClick(encounter.pokemonId1)} />
-                  <TypeIcons types={encounter.types1} />
-                </VStack>
-                <AutocompleteInput
-                  initialValue={encounter.pokemon1 || ''}
-                  onPokemonSelect={(p) => handlePokemonSelect(index, 1, p)}
-                  isDupesClauseActive={run.rules?.dupesClause}
-                  playerContext={1}
-                  player1CaughtChains={player1CaughtChains}
-                  player2CaughtChains={player2CaughtChains}
-                />
-                <Box>
-                  {encounter.pokemonId1 && (
-                    <Tooltip label="Entwickeln" fontSize="md">
-                      <IconButton
-                        aria-label="Pokémon entwickeln"
-                        icon={<FaArrowUp />}
-                        size="xs"
-                        variant="outline"
-                        colorScheme="green"
-                        onClick={() => handleEvolve(encounter, 1)}
-                      />
-                    </Tooltip>
-                  )}
-                </Box>
-                {viewSettings.showNicknames && (
-                  <Input placeholder="Nickname" value={encounter.nickname1 || ''} onChange={(e) => handleFieldChange(index, 'nickname1', e.target.value)} />
-                )}
-                {encounter.status1 === 'pending' || encounter.status1 === 'gift' ? <Box /> : <StatusButtonGroup currentStatus={encounter.status1} onChange={(newStatus) => handleFieldChange(index, 'status1', newStatus)} />}
-                
+            <Grid templateColumns={gridTemplateColumns} gap={4} alignItems="center" p={4} borderBottomWidth={2} borderColor="gray.300" _dark={{ borderColor: 'gray.600' }}>
+                <Box/>
+                <Box />
+                <Text fontWeight="bold">{t('tracker.location_header')}</Text>
+                <Text fontWeight="bold" textAlign="center" whiteSpace="nowrap">{t('tracker.pokemon_header')}</Text>
+                <Text fontWeight="bold">{player1Name}</Text>
+                <Box />
+                {viewSettings.showNicknames && <Text fontWeight="bold">{t('tracker.nickname_header')}</Text>}
+                <Text fontWeight="bold">{t('tracker.status_header')}</Text>
                 {isSoullink && (
-                  <>
-                    <VStack spacing={1}>
-                      <PokemonSprite pokemonId={encounter.pokemonId2} onClick={() => handleSpriteClick(encounter.pokemonId2)} />
-                      <TypeIcons types={encounter.types2} />
-                    </VStack>
-                    <AutocompleteInput
-                      initialValue={encounter.pokemon2 || ''}
-                      onPokemonSelect={(p) => handlePokemonSelect(index, 2, p)}
-                      isDupesClauseActive={run.rules?.dupesClause}
-                      playerContext={2}
-                      player1CaughtChains={player1CaughtChains}
-                      player2CaughtChains={player2CaughtChains}
-                    />
-                    <Box>
-                      {encounter.pokemonId2 && (
-                        <Tooltip label="Entwickeln" fontSize="md">
-                          <IconButton
-                            aria-label="Pokémon entwickeln"
-                            icon={<FaArrowUp />}
-                            size="xs"
-                            variant="outline"
-                            colorScheme="green"
-                            onClick={() => handleEvolve(encounter, 2)}
-                          />
-                        </Tooltip>
-                      )}
-                    </Box>
-                    {viewSettings.showNicknames && (
-                      <Input placeholder="Nickname" value={encounter.nickname2 || ''} onChange={(e) => handleFieldChange(index, 'nickname2', e.target.value)} />
-                    )}
-                    {encounter.status2 === 'pending' || encounter.status2 === 'gift' ? <Box /> : <StatusButtonGroup currentStatus={encounter.status2} onChange={(newStatus) => handleFieldChange(index, 'status2', newStatus)} />}
-                  </>
+                <>
+                    <Text fontWeight="bold" textAlign="center" whiteSpace="nowrap">{t('tracker.pokemon_header')}</Text>
+                    <Text fontWeight="bold">{player2Name}</Text>
+                    <Box />
+                    {viewSettings.showNicknames && <Text fontWeight="bold">{t('tracker.nickname_header')}</Text>}
+                    <Text fontWeight="bold">{t('tracker.status_header')}</Text>
+                </>
                 )}
-              </Grid>
-            );
-          })}
+            </Grid>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}>
+                <SortableContext items={displayedEncounters.map(enc => enc._id)} strategy={verticalListSortingStrategy}>
+                    {displayedEncounters.map((encounter) => (
+                        <SortableEncounterRow 
+                            key={encounter._id}
+                            encounter={encounter}
+                            gridTemplateColumns={gridTemplateColumns}
+                            isSoullink={isSoullink}
+                            viewSettings={viewSettings}
+                            t={t}
+                            i18n={i18n}
+                            player1Name={player1Name}
+                            player2Name={player2Name}
+                            isSortable={isSortable}
+                            rules={rules}
+                            player1CaughtChains={player1CaughtChains}
+                            player2CaughtChains={player2CaughtChains}
+                            handleClearEncounter={handleClearEncounter}
+                            handleSpriteClick={handleSpriteClick}
+                            handlePokemonSelect={handlePokemonSelect}
+                            handleEvolve={handleEvolve}
+                            handleFieldChange={handleFieldChange}
+                            handleStatusChangeAttempt={handleStatusChangeAttempt}
+                        />
+                    ))}
+                </SortableContext>
+            </DndContext>
         </VStack>
       </Container>
-
+      
       <Modal isOpen={isRulesOpen} onClose={onRulesClose}>
         <ModalOverlay />
         <ModalContent>
@@ -581,40 +653,54 @@ function TrackerPage() {
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
-              <FormControl>
-                <Checkbox isChecked={rules?.dupesClause} onChange={(e) => setRules({...rules, dupesClause: e.target.checked})}>
-                  {t('rules.dupes_clause')}
-                </Checkbox>
-              </FormControl>
-              <FormControl>
-                <Checkbox isChecked={rules?.shinyClause} onChange={(e) => setRules({...rules, shinyClause: e.target.checked})}>
-                  {t('rules.shiny_clause')}
-                </Checkbox>
-              </FormControl>
-              <FormControl>
-                <FormLabel>{t('rules.custom_rules_label')}</FormLabel>
-                <Textarea value={rules?.customRules} onChange={(e) => setRules({...rules, customRules: e.target.value})} placeholder={t('rules.custom_rules_placeholder')} />
-              </FormControl>
+              <FormControl><Checkbox isChecked={rules?.dupesClause} onChange={(e) => setRules({...rules, dupesClause: e.target.checked})}>{t('rules.dupes_clause')}</Checkbox></FormControl>
+              <FormControl><Checkbox isChecked={rules?.shinyClause} onChange={(e) => setRules({...rules, shinyClause: e.target.checked})}>{t('rules.shiny_clause')}</Checkbox></FormControl>
+              <FormControl><FormLabel>{t('rules.custom_rules_label')}</FormLabel><Textarea value={rules?.customRules} onChange={(e) => setRules({...rules, customRules: e.target.value})} placeholder={t('rules.custom_rules_placeholder')} /></FormControl>
             </VStack>
           </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onRulesClose}>
-              {t('rules.close_button')}
-            </Button>
-            <Button colorScheme="blue" onClick={handleSaveRules}>
-              {t('rules.save_button')}
-            </Button>
-          </ModalFooter>
+          <ModalFooter><Button variant="ghost" mr={3} onClick={onRulesClose}>{t('rules.close_button')}</Button><Button colorScheme="blue" onClick={handleSaveRules}>{t('rules.save_button')}</Button></ModalFooter>
         </ModalContent>
       </Modal>
 
-      <PokemonDetailModal
-        isOpen={isDetailOpen}
-        onClose={onDetailClose}
-        pokemon={selectedPokemonDetails}
-        isLoading={isDetailLoading}
-        game={run?.game}
-      />
+      <Modal isOpen={isFaintModalOpen} onClose={onFaintModalClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+            <ModalHeader>Grund für die Niederlage</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+                <FormControl><FormLabel>Wähle einen Grund aus:</FormLabel>
+                    <Select value={selectedFaintReason} onChange={(e) => setSelectedFaintReason(e.target.value)}>
+                       {faintReasonOptions.map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
+                    </Select>
+                </FormControl>
+            </ModalBody>
+            <ModalFooter><Button variant="ghost" mr={3} onClick={onFaintModalClose}>Abbrechen</Button><Button colorScheme="red" onClick={handleConfirmFaint}>Bestätigen</Button></ModalFooter>
+        </ModalContent>
+      </Modal>
+      
+      <Modal isOpen={isShareOpen} onClose={onShareClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+            <ModalHeader>Zuschauer-Link teilen</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+            <Text mb={2}>Jeder mit diesem Link kann deinen Run ansehen (ohne Bearbeitungsrechte).</Text>
+            <Flex>
+                <Input value={spectatorLink} isReadOnly />
+                <Button onClick={onCopyLink} ml={2}>
+                {hasCopiedLink ? 'Kopiert!' : 'Kopieren'}
+                </Button>
+            </Flex>
+            </ModalBody>
+            <ModalFooter>
+            <Button colorScheme="blue" onClick={onShareClose}>
+                Schließen
+            </Button>
+            </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <PokemonDetailModal isOpen={isDetailOpen} onClose={onDetailClose} pokemon={selectedPokemonDetails} isLoading={isDetailLoading} game={run?.game}/>
     </>
   );
 }
