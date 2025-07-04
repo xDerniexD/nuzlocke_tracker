@@ -7,6 +7,7 @@ import AutocompleteInput from '../components/AutocompleteInput';
 import StatusButtonGroup from '../components/StatusButtonGroup';
 import TypeIcons from '../components/TypeIcons';
 import PokemonDetailModal from '../components/PokemonDetailModal';
+import SubNav from '../components/SubNav';
 import {
   Box, Button, Container, Flex, Heading, Spinner, Alert,
   AlertIcon, Grid, Text, Input, Select, useToast, Tag, HStack,
@@ -18,7 +19,7 @@ import {
   useClipboard, Tooltip, IconButton
 } from '@chakra-ui/react';
 import { ArrowBackIcon, CheckCircleIcon, TimeIcon } from '@chakra-ui/icons';
-import { FaShieldAlt, FaBook, FaCog, FaCopy, FaTrashRestore, FaArrowUp } from 'react-icons/fa';
+import { FaShieldAlt, FaBook, FaCog, FaCopy, FaTrashRestore, FaArrowUp, FaBullseye } from 'react-icons/fa';
 import io from 'socket.io-client';
 
 function TrackerPage() {
@@ -261,7 +262,6 @@ function TrackerPage() {
   
   const handleClearEncounter = (encounterToClear) => {
     if (!encounterToClear) return;
-
     const clearedEncounter = {
       ...encounterToClear,
       pokemon1: null,
@@ -271,7 +271,6 @@ function TrackerPage() {
       status1: encounterToClear.encounterType === 'gift' ? 'gift' : 'pending',
       evolutionChainId1: null,
     };
-
     if (run.type === 'soullink') {
       clearedEncounter.pokemon2 = null;
       clearedEncounter.pokemonId2 = null;
@@ -280,12 +279,10 @@ function TrackerPage() {
       clearedEncounter.status2 = encounterToClear.encounterType === 'gift' ? 'gift' : 'pending';
       clearedEncounter.evolutionChainId2 = null;
     }
-
     setRun(prevRun => ({
       ...prevRun,
       encounters: prevRun.encounters.map(e => e._id === clearedEncounter._id ? clearedEncounter : e)
     }));
-
     saveEncounterChange(clearedEncounter);
   };
   
@@ -296,53 +293,31 @@ function TrackerPage() {
     try {
       const currentPokemonRes = await api.get(`/pokemon/${currentPokemonId}`);
       const currentPokemon = currentPokemonRes.data;
-
       if (!currentPokemon.evolutions || currentPokemon.evolutions.length === 0) {
         toast({ title: "Keine Weiterentwicklung verfügbar.", status: "info", duration: 2000, isClosable: true });
         return;
       }
-
       const nextEvolution = currentPokemon.evolutions[0];
-      
-      // KORRIGIERT: Verwende `to_id` anstatt `id`
-      const nextPokemonId = nextEvolution.to_id; 
-      
+      const nextPokemonId = nextEvolution.to_id;
       if (!nextPokemonId) {
         toast({ title: "Fehler: Entwicklungs-ID nicht gefunden.", status: "error", duration: 3000 });
         return;
       }
-
       const nextPokemonRes = await api.get(`/pokemon/${nextPokemonId}`);
       const nextPokemon = nextPokemonRes.data;
-
       let changes = {};
       const newName = i18n.language === 'de' && nextPokemon.name_de ? nextPokemon.name_de : nextPokemon.name_en;
-
       if (player === 1) {
-        changes = {
-          pokemon1: newName,
-          pokemonId1: nextPokemon.id,
-          types1: nextPokemon.types,
-          evolutionChainId1: nextPokemon.evolutionChainId,
-        };
+        changes = { pokemon1: newName, pokemonId1: nextPokemon.id, types1: nextPokemon.types, evolutionChainId1: nextPokemon.evolutionChainId };
       } else {
-        changes = {
-          pokemon2: newName,
-          pokemonId2: nextPokemon.id,
-          types2: nextPokemon.types,
-          evolutionChainId2: nextPokemon.evolutionChainId,
-        };
+        changes = { pokemon2: newName, pokemonId2: nextPokemon.id, types2: nextPokemon.types, evolutionChainId2: nextPokemon.evolutionChainId };
       }
-
       const updatedEncounter = { ...encounterToEvolve, ...changes };
-      
       setRun(prevRun => ({
         ...prevRun,
         encounters: prevRun.encounters.map(e => e._id === updatedEncounter._id ? updatedEncounter : e)
       }));
-
       saveEncounterChange(updatedEncounter);
-
     } catch (error) {
       toast({ title: "Fehler bei der Entwicklung.", status: "error", duration: 3000 });
     }
@@ -392,6 +367,9 @@ function TrackerPage() {
           <HStack>
             <Link to="/"><Button leftIcon={<ArrowBackIcon />}>{t('tracker.dashboard_button')}</Button></Link>
             <Button leftIcon={<FaBook />} onClick={onRulesOpen}>{t('tracker.rules_button')}</Button>
+            <Link to={`/nuzlocke/${id}/teambuilder`}>
+              <Button leftIcon={<Icon as={FaBullseye} />}>Teambuilder</Button>
+            </Link>
             <Menu closeOnSelect={false}>
               <MenuButton as={Button} leftIcon={<Icon as={FaCog} />}>
                 {t('tracker.view_button')}
@@ -436,6 +414,8 @@ function TrackerPage() {
 
           <Box minW="220px" textAlign="right">{getSaveStatusIndicator()}</Box>
         </Flex>
+
+        <SubNav />
 
         <HStack spacing={8} mb={4} p={4} borderWidth={1} borderRadius="lg" align="center">
           <HStack>

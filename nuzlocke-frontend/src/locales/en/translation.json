@@ -105,5 +105,17 @@
     "delete_run_body": "Are you sure? This action cannot be undone.",
     "cancel_button": "Cancel",
     "delete_button": "Delete"
+  },
+  "teambuilder": {
+    "back_to_tracker": "Back to Tracker",
+    "title": "Teambuilder",
+    "your_team": "Your Team",
+    "your_box": "Your Box",
+    "no_pokemon_caught": "You haven't caught any Pokémon yet."
+  },
+  "subnav": {
+    "encounters": "Encounters",
+    "teambuilder": "Teambuilder",
+    "statistics": "Statistics"
   }
 }

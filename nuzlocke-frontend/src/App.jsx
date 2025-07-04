@@ -1,29 +1,29 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { Flex, Spinner } from '@chakra-ui/react'; // Spinner importieren
+import { ChakraProvider, Flex, Spinner, Heading } from '@chakra-ui/react';
 
-// Importiere alle deine Seiten-Komponenten und die neue Navbar
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import RegisterPage from './pages/RegisterPage';
 import TrackerPage from './pages/TrackerPage';
+import TeambuilderPage from './pages/TeambuilderPage';
 import Navbar from './components/Navbar'; 
 
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // NEU: Ladezustand
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const loggedInUserJSON = localStorage.getItem('user');
-    const token = localStorage.getItem('token'); // Auch den Token prüfen
+    const token = localStorage.getItem('token');
     if (loggedInUserJSON && token) {
       const foundUser = JSON.parse(loggedInUserJSON);
       setUser(foundUser);
     }
-    setLoading(false); // NEU: Ladevorgang abschließen
+    setLoading(false);
   }, []);
 
   const handleLogout = () => {
@@ -38,7 +38,6 @@ function App() {
     navigate('/');
   };
 
-  // NEU: Während der Prüfung wird ein Lade-Spinner angezeigt
   if (loading) {
     return (
       <Flex justify="center" align="center" height="100vh">
@@ -49,37 +48,48 @@ function App() {
 
   return (
     <div className="App">
-      {/* Die Navbar wird nur angezeigt, wenn ein User eingeloggt ist */}
-      {user && <Navbar user={user} onLogout={handleLogout} />}
-      
-      <Routes>
-        <Route 
-          path="/login" 
-          element={user ? <Navigate to="/" /> : <LoginPage onLoginSuccess={handleLoginSuccess} />} 
-        />
+      <ChakraProvider>
+        {user && <Navbar user={user} onLogout={handleLogout} />}
         
-        <Route 
-          path="/register" 
-          element={user ? <Navigate to="/" /> : <RegisterPage />} 
-        />
+        <Routes>
+          <Route 
+            path="/login" 
+            element={user ? <Navigate to="/" /> : <LoginPage onLoginSuccess={handleLoginSuccess} />} 
+          />
+          
+          <Route 
+            path="/register" 
+            element={user ? <Navigate to="/" /> : <RegisterPage />} 
+          />
 
-        <Route 
-          path="/nuzlocke/:id" 
-          element={user ? <TrackerPage /> : <Navigate to="/login" />}
-        />
+          <Route 
+            path="/nuzlocke/:id/teambuilder" 
+            element={user ? <TeambuilderPage /> : <Navigate to="/login" />}
+          />
 
-        <Route 
-          path="/" 
-          element={user ? <DashboardPage user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
-        />
+          <Route 
+            path="/nuzlocke/:id/statistics" 
+            element={user ? <Heading p={10}>Statistik-Seite (Demnächst)</Heading> : <Navigate to="/login" />}
+          />
 
-        <Route 
-          path="*"
-          element={<h2 style={{ textAlign: 'center' }}>FEHLER: Keine Route für diesen Pfad gefunden!</h2>}
-        />
-      </Routes>
+          <Route 
+            path="/nuzlocke/:id" 
+            element={user ? <TrackerPage /> : <Navigate to="/login" />}
+          />
+
+          <Route 
+            path="/" 
+            element={user ? <DashboardPage user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+
+          <Route 
+            path="*"
+            element={<Heading as="h2" size="lg" textAlign="center" mt={20}>FEHLER 404: Seite nicht gefunden!</Heading>}
+          />
+        </Routes>
+      </ChakraProvider>
     </div>
   )
 }
 
-export default App
+export default App;

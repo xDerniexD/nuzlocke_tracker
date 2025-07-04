@@ -105,6 +105,18 @@
     "delete_run_body": "Bist du sicher? Diese Aktion kann nicht rückgängig gemacht werden.",
     "cancel_button": "Abbrechen",
     "delete_button": "Löschen"
+  },
+  "teambuilder": {
+    "back_to_tracker": "Zurück zum Tracker",
+    "title": "Teamplanner",
+    "your_team": "Dein Team",
+    "your_box": "Deine Box",
+    "no_pokemon_caught": "Du hast noch keine Pokémon gefangen."
+  },
+    "subnav": {
+    "encounters": "Begegnungen",
+    "teambuilder": "Teamplanner",
+    "statistics": "Statistiken"
   }
-
+  
 }
