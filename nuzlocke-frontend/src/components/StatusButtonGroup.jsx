@@ -10,46 +10,52 @@ const statusOptions = [
 ];
 
 function StatusButtonGroup({ currentStatus, onStatusChange, faintReason }) {
-  if (currentStatus === 'pending') {
-    return null;
-  }
+  // KORREKTUR: Die folgende Zeile wurde entfernt, um die Buttons immer anzuzeigen.
+  // if (currentStatus === 'pending') { return null; }
   
-  const faintedButton = statusOptions.find(opt => opt.value === 'fainted');
-
   return (
     <HStack spacing={1}>
       {statusOptions.map(({ value, label, color, icon }) => {
-        const isSelected = currentStatus === value;
-        
-        // Spezielle Logik für den "Besiegt"-Button mit Tooltip
-        if (value === 'fainted' && faintReason) {
-            return (
-                 <Tooltip key={value} label={`Grund: ${faintReason}`} placement="top" hasArrow>
-                    <Button
-                        size="sm"
-                        colorScheme={isSelected ? color : 'gray'}
-                        variant={isSelected ? 'solid' : 'outline'}
-                        onClick={() => onStatusChange(value)}
-                        title={label}
-                    >
-                        <Icon as={icon} />
-                    </Button>
-                </Tooltip>
-            )
+        // Ignoriere den "Geschenk"-Button, wenn der Status nicht "gift" ist.
+        if (value === 'gift' && currentStatus !== 'gift') {
+            return null;
         }
 
-        return (
-            <Button
-                key={value}
-                size="sm"
-                colorScheme={isSelected ? color : 'gray'}
-                variant={isSelected ? 'solid' : 'outline'}
-                onClick={() => onStatusChange(value)}
-                title={label}
-            >
-                <Icon as={icon} />
-            </Button>
-        );
+        // Zeige alle anderen Buttons an.
+        if (value !== 'gift') {
+            const isSelected = currentStatus === value;
+            
+            // Spezielle Logik für den "Besiegt"-Button mit Tooltip für den Grund
+            if (value === 'fainted' && faintReason) {
+                return (
+                     <Tooltip key={value} label={`Grund: ${faintReason}`} placement="top" hasArrow>
+                        <Button
+                            size="sm"
+                            colorScheme={isSelected ? color : 'gray'}
+                            variant={isSelected ? 'solid' : 'outline'}
+                            onClick={() => onStatusChange(value)}
+                            title={label}
+                        >
+                            <Icon as={icon} />
+                        </Button>
+                    </Tooltip>
+                )
+            }
+
+            return (
+                <Button
+                    key={value}
+                    size="sm"
+                    colorScheme={isSelected ? color : 'gray'}
+                    variant={isSelected ? 'solid' : 'outline'}
+                    onClick={() => onStatusChange(value)}
+                    title={label}
+                >
+                    <Icon as={icon} />
+                </Button>
+            );
+        }
+        return null; // Fallback
       })}
     </HStack>
   );

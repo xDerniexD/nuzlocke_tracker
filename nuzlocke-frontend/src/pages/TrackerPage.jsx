@@ -529,9 +529,6 @@ function TrackerPage() {
           <HStack>
             <Link to="/"><Button leftIcon={<ArrowBackIcon />}>{t('tracker.dashboard_button')}</Button></Link>
             <Button leftIcon={<FaBook />} onClick={onRulesOpen}>{t('tracker.rules_button')}</Button>
-            <Link to={`/nuzlocke/${id}/teambuilder`}>
-              <Button leftIcon={<Icon as={FaBullseye} />}>Teambuilder</Button>
-            </Link>
             <Menu closeOnSelect={false}>
               <MenuButton as={Button} leftIcon={<Icon as={FaCog} />}>
                 {t('tracker.view_button')}
