@@ -54,6 +54,7 @@ function TeambuilderPage() {
         const p1 = enc.pokemonId1 ? { pokemonId: enc.pokemonId1, name_de: enc.pokemon1, name_en: enc.pokemon1, nickname: enc.nickname1, types: enc.types1 } : null;
         const p2 = run.type === 'soullink' && enc.pokemonId2 ? { pokemonId: enc.pokemonId2, name_de: enc.pokemon2, name_en: enc.pokemon2, nickname: enc.nickname2, types: enc.types2 } : null;
         const pair = { pairId: enc._id, p1, p2 };
+
         if (enc.status1 === 'fainted' || enc.status2 === 'fainted') {
             if (p1 || p2) fainted.push(pair);
         } else if (enc.status1 === 'missed' || enc.status2 === 'missed') {
@@ -102,7 +103,7 @@ function TeambuilderPage() {
       if (team.length < 6) {
         newTeam = [...team, pair];
       } else {
-        return; // Team ist voll
+        return; 
       }
     } else {
       newTeam = team.filter(p => p.pairId !== pair.pairId);
@@ -133,13 +134,15 @@ function TeambuilderPage() {
 
   if (loading) return <Flex justify="center" align="center" height="100vh"><Spinner size="xl" /></Flex>;
   if (error) return <Container mt={10}><Alert status="error"><AlertIcon />{error}</Alert></Container>;
+  if (!run) return null;
 
   return (
     <>
       <Container maxW="container.2xl" py={8}>
         <Flex justifyContent="space-between" alignItems="center" mb={4}>
           <HStack>
-            <Link to={`/nuzlocke/${id}`}><Button leftIcon={<ArrowBackIcon />}>{t('tracker.dashboard_button')}</Button></Link>
+            {/* KORREKTUR: Link auf "/" geändert */}
+            <Link to="/"><Button leftIcon={<ArrowBackIcon />}>{t('tracker.dashboard_button')}</Button></Link>
             <Button leftIcon={<FaBook />} onClick={onRulesOpen}>{t('tracker.rules_button')}</Button>
             <Menu closeOnSelect={false}>
               <MenuButton as={Button} leftIcon={<Icon as={FaCog} />}>{t('tracker.view_button')}</MenuButton>

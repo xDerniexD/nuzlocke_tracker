@@ -1,7 +1,6 @@
 import React from 'react';
 import { HStack, Image, Tooltip, Center } from '@chakra-ui/react';
 
-// Ein Mapping-Objekt, das jedem Typ eine Farbe zuweist
 const typeColorMap = {
   normal: '#A8A878',
   fire: '#F08030',
@@ -26,24 +25,23 @@ const typeColorMap = {
 
 function TypeIcons({ types = [] }) {
   if (!types || types.length === 0) {
-    return null; // Zeige nichts an, wenn keine Typen vorhanden sind
+    return null;
   }
 
   return (
-    // Ordnet die Icons horizontal mit einem kleinen Abstand an
     <HStack spacing={1.5} justifyContent="center">
-      {types.map((type) => (
+      {/* KORREKTUR: Filtert alle ungültigen/leeren Typen-Einträge heraus, bevor gemappt wird */}
+      {types.filter(type => type && typeof type === 'string').map((type) => (
         <Tooltip key={type} label={type.charAt(0).toUpperCase() + type.slice(1)} placement="bottom" hasArrow>
-          {/* Center wird als runder, farbiger Hintergrund verwendet */}
           <Center
             boxSize="24px"
-            bg={typeColorMap[type] || 'gray.500'} // Nutze die Farbe aus der Map oder ein Standard-Grau
-            borderRadius="full" // Macht den Container perfekt rund
+            bg={typeColorMap[type] || 'gray.500'}
+            borderRadius="full"
           >
             <Image
               src={`/assets/images/types/${type}.svg`}
               alt={`${type} type icon`}
-              boxSize="14px" // Das Icon ist etwas kleiner als der Hintergrund
+              boxSize="14px"
               htmlHeight="14px"
               htmlWidth="14px"
             />

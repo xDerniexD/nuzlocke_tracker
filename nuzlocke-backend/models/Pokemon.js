@@ -1,22 +1,31 @@
 const mongoose = require('mongoose');
 
-const pokemonSchema = new mongoose.Schema({
+const MoveVersionDetailSchema = new mongoose.Schema({
+  // Referenz auf das Move-Dokument
+  move: { type: mongoose.Schema.Types.ObjectId, ref: 'Move' }, 
+  level: { type: Number, required: true },
+  name_slug: { type: String } // Zur einfacheren Zuordnung
+}, { _id: false });
+
+const PokemonSchema = new mongoose.Schema({
   id: { type: Number, required: true, unique: true },
   pokedexId: { type: Number, required: true },
   name_en: { type: String, required: true },
   name_de: { type: String },
   evolutionChainId: { type: Number },
-  evolutions: { type: Array, default: [] },
   types: { type: [String], default: [] },
   baseStats: { type: Object },
-  moves: { type: Object },
   abilities: { type: Array, default: [] },
-  catchRate: { type: Number },
-  genderRatio: { type: Number },
-  heldItems: { type: Array, default: [] },
+  // KORREKTUR: Umstrukturierung für die Referenzierung
+  moves: {
+    platinum: {
+      'level-up': [MoveVersionDetailSchema],
+      'machine': [MoveVersionDetailSchema],
+      'tutor': [MoveVersionDetailSchema],
+      'egg': [MoveVersionDetailSchema],
+    }
+  }
 });
 
-// Erstellt einen Text-Index für eine effiziente, sprachübergreifende Suche
-pokemonSchema.index({ name_en: 'text', name_de: 'text' });
-
-module.exports = mongoose.models.Pokemon || mongoose.model('Pokemon', pokemonSchema);
+PokemonSchema.index({ name_en: 'text', name_de: 'text' });
+module.exports = mongoose.models.Pokemon || mongoose.model('Pokemon', PokemonSchema);

@@ -5,3 +5,7 @@ generatePokedex.js
 generatepokedexwithevolutions.js
 getdata.js
 output
+generatemoves.js
+seedFulldatabase.js
+seedPokedex.js
+seedDatabase.js
