@@ -7,10 +7,10 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter,
   ModalBody, ModalCloseButton, FormControl, FormLabel, Textarea, Checkbox,
   Menu, MenuButton, MenuList, MenuOptionGroup, MenuItemOption, useToast, Tag, IconButton,
-  useClipboard
+  useClipboard, Input
 } from '@chakra-ui/react';
 import { ArrowBackIcon, CheckCircleIcon } from '@chakra-ui/icons';
-import { FaBook, FaCog, FaCopy } from 'react-icons/fa';
+import { FaBook, FaCog, FaCopy, FaShareAlt } from 'react-icons/fa';
 import api from '../api/api';
 import SubNav from '../components/SubNav';
 import PokemonPairCard from '../components/PokemonPairCard';
@@ -31,9 +31,15 @@ function TeambuilderPage() {
   const [saveStatus, setSaveStatus] = useState('saved');
 
   const { isOpen: isRulesOpen, onOpen: onRulesOpen, onClose: onRulesClose } = useDisclosure();
+  const { isOpen: isShareOpen, onOpen: onShareOpen, onClose: onShareClose } = useDisclosure();
+
   const [rules, setRules] = useState({ dupesClause: true, shinyClause: true, customRules: '' });
   const [viewSettings, setViewSettings] = useState({ showNicknames: true, showStatic: true, showGift: true });
   const { onCopy, hasCopied } = useClipboard(run?.inviteCode || '');
+  
+  const spectatorLink = `${window.location.origin}/spectate/${run?.spectatorId}`;
+  const { onCopy: onCopyLink, hasCopied: hasCopiedLink } = useClipboard(spectatorLink);
+
 
   const saveTeam = useCallback(async (newTeam) => {
       setSaveStatus('saving');
@@ -124,9 +130,9 @@ function TeambuilderPage() {
   
   const getSaveStatusIndicator = () => {
     switch (saveStatus) {
-      case 'saving': return <Tag colorScheme="blue"><Spinner size="xs" mr={2} />Speichern...</Tag>;
+      case 'saving': return <Tag colorScheme="blue"><Spinner size="xs" mr={2} />{t('tracker.saving_status')}</Tag>;
       case 'error': return <Tag colorScheme="red">Fehler</Tag>;
-      default: return <Tag colorScheme="green"><CheckCircleIcon mr={2} />Gespeichert</Tag>;
+      default: return <Tag colorScheme="green"><CheckCircleIcon mr={2} />{t('tracker.saved_status')}</Tag>;
     }
   };
   
@@ -141,7 +147,6 @@ function TeambuilderPage() {
       <Container maxW="container.2xl" py={8}>
         <Flex justifyContent="space-between" alignItems="center" mb={4}>
           <HStack>
-            {/* KORREKTUR: Link auf "/" geändert */}
             <Link to="/"><Button leftIcon={<ArrowBackIcon />}>{t('tracker.dashboard_button')}</Button></Link>
             <Button leftIcon={<FaBook />} onClick={onRulesOpen}>{t('tracker.rules_button')}</Button>
             <Menu closeOnSelect={false}>
@@ -162,15 +167,20 @@ function TeambuilderPage() {
                 </MenuOptionGroup>
               </MenuList>
             </Menu>
+            <Tooltip label={t('share.spectator_link_title')}>
+                <Button onClick={onShareOpen} leftIcon={<Icon as={FaShareAlt} />}>
+                    {t('share.share_button')}
+                </Button>
+            </Tooltip>
           </HStack>
           
           <VStack spacing={0}>
             <Heading as="h1" size="lg" textAlign="center">{run?.runName}</Heading>
             {run?.type === 'soullink' && run.inviteCode && (
               <HStack mt={2} p={1.5} pl={3} borderRadius="md" bg="gray.100" _dark={{ bg: 'gray.700' }}>
-                <Text fontSize="sm" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.300' }}>Invite Code:</Text>
+                <Text fontSize="sm" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.300' }}>{t('share.invite_code_label')}:</Text>
                 <Tag size="lg" colorScheme="purple" fontWeight="bold">{run.inviteCode}</Tag>
-                <Tooltip label={hasCopied ? "Kopiert!" : "Kopieren"} closeOnClick={false}><IconButton aria-label="Invite Code kopieren" icon={<FaCopy />} size="sm" onClick={onCopy} variant="ghost" /></Tooltip>
+                <Tooltip label={hasCopied ? t('share.copied') : t('share.copy')} closeOnClick={false}><IconButton aria-label="Invite Code kopieren" icon={<FaCopy />} size="sm" onClick={onCopy} variant="ghost" /></Tooltip>
               </HStack>
             )}
           </VStack>
@@ -186,7 +196,7 @@ function TeambuilderPage() {
             <Flex wrap="wrap" gap={4} minH="160px" p={4} borderWidth={1} borderRadius="lg" bg="gray.50" _dark={{bg: 'gray.800'}}>
               {team.length > 0 ? team.map(pair => (
                 <PokemonPairCard key={pair.pairId} pair={pair} onClick={() => handlePairClick(pair, 'team')} isTeamMember />
-              )) : <Text color="gray.500">Dein Team ist leer. Klicke auf ein Pokémon aus der Box, um es hinzuzufügen.</Text>}
+              )) : <Text color="gray.500">{t('teambuilder.empty_team_prompt')}</Text>}
             </Flex>
           </Box>
 
@@ -197,7 +207,7 @@ function TeambuilderPage() {
             {box.length === 0 && team.length === 0 && fainted.length === 0 && missed.length === 0 ? (
               <Text color="gray.500">{t('teambuilder.no_pokemon_caught')}</Text>
             ) : box.length === 0 ? (
-              <Text color="gray.500">Deine Box ist leer.</Text>
+              <Text color="gray.500">{t('teambuilder.empty_box')}</Text>
             ) : (
               <Flex wrap="wrap" gap={4}>
                 {box.map(pair => (
@@ -210,9 +220,9 @@ function TeambuilderPage() {
           <Divider />
 
           <Box>
-            <Heading as="h2" size="lg" mb={4}>Besiegte Pokémon</Heading>
+            <Heading as="h2" size="lg" mb={4}>{t('teambuilder.fainted_pokemon')}</Heading>
             {fainted.length === 0 ? (
-              <Text color="gray.500">Keine besiegten Pokémon.</Text>
+              <Text color="gray.500">{t('teambuilder.no_fainted_pokemon')}</Text>
             ) : (
               <Flex wrap="wrap" gap={4}>
                 {fainted.map(pair => (<Box key={pair.pairId} opacity={0.6}><PokemonPairCard pair={pair} /></Box>))}
@@ -223,9 +233,9 @@ function TeambuilderPage() {
           <Divider />
 
           <Box>
-            <Heading as="h2" size="lg" mb={4}>Verpasste Begegnungen</Heading>
+            <Heading as="h2" size="lg" mb={4}>{t('teambuilder.missed_encounters')}</Heading>
             {missed.length === 0 ? (
-              <Text color="gray.500">Keine verpassten Begegnungen.</Text>
+              <Text color="gray.500">{t('teambuilder.no_missed_encounters')}</Text>
             ) : (
               <Flex wrap="wrap" gap={4}>
                 {missed.map(pair => {
@@ -243,6 +253,28 @@ function TeambuilderPage() {
           </Box>
         </VStack>
       </Container>
+      
+      <Modal isOpen={isShareOpen} onClose={onShareClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+            <ModalHeader>{t('share.spectator_link_title')}</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+            <Text mb={2}>{t('share.spectator_link_description')}</Text>
+            <Flex>
+                <Input value={spectatorLink} isReadOnly />
+                <Button onClick={onCopyLink} ml={2}>
+                {hasCopiedLink ? t('share.copied') : t('share.copy')}
+                </Button>
+            </Flex>
+            </ModalBody>
+            <ModalFooter>
+            <Button colorScheme="blue" onClick={onShareClose}>
+                {t('share.close_button')}
+            </Button>
+            </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <Modal isOpen={isRulesOpen} onClose={onRulesClose}>
         <ModalOverlay />

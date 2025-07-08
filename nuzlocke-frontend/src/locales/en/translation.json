@@ -12,7 +12,7 @@
   "navbar": {
     "title": "Nuzlocke Tracker"
   },
-    "stats": {
+  "stats": {
     "hp": "HP",
     "attack": "Attack",
     "defense": "Defense",
@@ -36,7 +36,25 @@
     "tm_hm": "TM/HM",
     "unknown_move": "Unknown Move",
     "loading_error": "Pokémon data could not be loaded.",
-    "close_button": "Close"
+    "close_button": "Close",
+    "type": "Type",
+    "category": "Category",
+    "power": "Power",
+    "accuracy": "Accuracy",
+    "pp": "PP",
+    "description": "Description",
+    "evolutions": "Evolutions"
+  },
+  "evolution_triggers": {
+    "level-up": "Level {{level}}",
+    "trade": "Trade",
+    "use-item": "Use {{item}}",
+    "other": "Special"
+  },
+  "damage_class": {
+    "physical": "Physical",
+    "special": "Special",
+    "status": "Status"
   },
   "methods": {
     "level-up": "By Level-Up",
@@ -107,15 +125,29 @@
     "delete_button": "Delete"
   },
   "teambuilder": {
-    "back_to_tracker": "Back to Tracker",
     "title": "Teambuilder",
     "your_team": "Your Team",
     "your_box": "Your Box",
-    "no_pokemon_caught": "You haven't caught any Pokémon yet."
+    "no_pokemon_caught": "You haven't caught any Pokémon yet.",
+    "fainted_pokemon": "Fainted Pokémon",
+    "no_fainted_pokemon": "No fainted Pokémon.",
+    "missed_encounters": "Missed Encounters",
+    "no_missed_encounters": "No missed encounters.",
+    "empty_team_prompt": "Your team is empty. Click on a Pokémon from the box to add it.",
+    "empty_box": "Your box is empty."
   },
   "subnav": {
     "encounters": "Encounters",
     "teambuilder": "Teambuilder",
     "statistics": "Statistics"
+  },
+  "share": {
+    "share_button": "Share",
+    "spectator_link_title": "Share Spectator Link",
+    "spectator_link_description": "Anyone with this link can view your run (read-only).",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "close_button": "Close",
+    "invite_code_label": "Invite Code"
   }
 }

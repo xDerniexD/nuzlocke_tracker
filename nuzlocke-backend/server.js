@@ -10,28 +10,30 @@ const { Server } = require("socket.io");
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-// Importiere die Models und Middleware
+// Models und Middleware
 const User = require('./models/User');
-// Das Pokemon-Model wird hier nicht mehr direkt benötigt, da die Route es importiert
-// const Pokemon = require('./models/Pokemon'); 
+require('./models/Ability'); 
+require('./models/Move'); // Stellt sicher, dass das Move-Modell registriert ist
 const { protect } = require('./middleware/authMiddleware');
 const nuzlockeRoutes = require('./routes/nuzlockeRoutes');
-// NEU: Importiere die Pokémon-Routen
 const pokemonRoutes = require('./routes/pokemonRoutes');
 
 const app = express();
 const PORT = 3000;
 
-// Middleware
-app.use(cors());
+const corsOptions = {
+  origin: 'http://localhost:5173',
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const server = http.createServer(app);
+
 const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"]
-  }
+  cors: corsOptions
 });
 
 io.on('connection', (socket) => {
@@ -56,9 +58,6 @@ mongoose.connect(dbURI)
 
 
 // --- API-Endpunkte ---
-
-// ENTFERNT: Der alte Such-Endpunkt. Diese Logik befindet sich jetzt in pokemonRoutes.js
-// app.get('/api/pokemon/search', ...);
 
 app.get('/api/games/platinum', (req, res) => {
   const filePath = path.join(__dirname, 'data', 'platinum.json');
@@ -118,6 +117,6 @@ app.get('/api/users/profile', protect, (req, res) => {
 
 
 app.set('socketio', io);
-// NEU: Binde die Pokémon-Routen korrekt ein
 app.use('/api/pokemon', pokemonRoutes);
+// Die fehlerhafte Zeile wurde entfernt
 app.use('/api/nuzlockes', nuzlockeRoutes);

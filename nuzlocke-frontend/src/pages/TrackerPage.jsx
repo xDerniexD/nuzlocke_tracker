@@ -42,6 +42,7 @@ import { ArrowBackIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import { FaShieldAlt, FaBook, FaCog, FaCopy, FaTrashRestore, FaArrowUp, FaBullseye, FaGripLines, FaShareAlt } from 'react-icons/fa';
 import io from 'socket.io-client';
 
+// SortableEncounterRow und EncounterRow bleiben unverändert...
 function SortableEncounterRow({ encounter, ...props }) {
   const {
     attributes,
@@ -117,6 +118,7 @@ function EncounterRow({ encounter, isSoullink, gridTemplateColumns, viewSettings
         </Grid>
     );
 }
+
 
 function TrackerPage() {
   const { id } = useParams();
@@ -510,8 +512,8 @@ function TrackerPage() {
 
   const getSaveStatusIndicator = () => {
     switch (saveStatus) {
-      case 'saving': return <Tag colorScheme="blue"><Spinner size="xs" mr={2} />Speichern...</Tag>;
-      default: return <Tag colorScheme="green"><CheckCircleIcon mr={2} />Gespeichert</Tag>;
+      case 'saving': return <Tag colorScheme="blue"><Spinner size="xs" mr={2} />{t('tracker.saving_status')}</Tag>;
+      default: return <Tag colorScheme="green"><CheckCircleIcon mr={2} />{t('tracker.saved_status')}</Tag>;
     }
   };
 
@@ -541,8 +543,7 @@ function TrackerPage() {
                       showNicknames: values.includes('showNicknames'),
                       showStatic: values.includes('showStatic'),
                       showGift: values.includes('showGift'),
-                    })
-                  }
+                    })}
                 >
                   <MenuItemOption value="showNicknames">{t('settings.nickname_column')}</MenuItemOption>
                   <MenuItemOption value="showStatic">{t('settings.static_encounters')}</MenuItemOption>
@@ -550,9 +551,9 @@ function TrackerPage() {
                 </MenuOptionGroup>
               </MenuList>
             </Menu>
-             <Tooltip label="Zuschauer-Link teilen">
+            <Tooltip label={t('share.spectator_link_title')}>
                 <Button onClick={onShareOpen} leftIcon={<Icon as={FaShareAlt} />}>
-                    Teilen
+                    {t('share.share_button')}
                 </Button>
             </Tooltip>
           </HStack>
@@ -561,38 +562,18 @@ function TrackerPage() {
             <Heading as="h1" size="lg" textAlign="center">{run.runName}</Heading>
             {run?.type === 'soullink' && run.inviteCode && (
               <HStack mt={2} p={1.5} pl={3} borderRadius="md" bg="gray.100" _dark={{ bg: 'gray.700' }}>
-                <Text fontSize="sm" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.300' }}>Invite Code:</Text>
+                <Text fontSize="sm" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.300' }}>{t('share.invite_code_label')}:</Text>
                 <Tag size="lg" colorScheme="purple" fontWeight="bold">{run.inviteCode}</Tag>
-                <Tooltip label={hasCopied ? "Kopiert!" : "Kopieren"} closeOnClick={false}>
-                  <IconButton aria-label="Invite Code kopieren" icon={<FaCopy />} size="sm" onClick={onCopy} variant="ghost" />
-                </Tooltip>
+                <Tooltip label={hasCopied ? t('share.copied') : t('share.copy')} closeOnClick={false}><IconButton aria-label="Invite Code kopieren" icon={<FaCopy />} size="sm" onClick={onCopy} variant="ghost" /></Tooltip>
               </HStack>
             )}
           </VStack>
 
           <Box minW="220px" textAlign="right">{getSaveStatusIndicator()}</Box>
         </Flex>
-
+        
         <SubNav />
-
-        <HStack spacing={8} mb={4} p={4} borderWidth={1} borderRadius="lg" align="center">
-          <HStack>
-            <Text fontWeight="bold">{t('tracker.sort_by')}</Text>
-            <Select w="200px" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="default">{t('tracker.sort_default')}</option>
-              <option value="alpha">{t('tracker.sort_alpha')}</option>
-            </Select>
-          </HStack>
-          <HStack>
-            <Text fontWeight="bold">{t('tracker.filter_by')}</Text>
-            <CheckboxGroup colorScheme="green" value={filterBy} onChange={setFilterBy}>
-              <Stack spacing={5} direction="row">
-                {filterOptions.map(option => (<Checkbox key={option.value} value={option.value}>{option.label}</Checkbox>))}
-              </Stack>
-            </CheckboxGroup>
-          </HStack>
-        </HStack>
-
+        
         <VStack spacing={0} align="stretch" borderWidth={1} borderRadius="lg" divider={<StackDivider />}>
             <Grid templateColumns={gridTemplateColumns} gap={4} alignItems="center" p={4} borderBottomWidth={2} borderColor="gray.300" _dark={{ borderColor: 'gray.600' }}>
                 <Box/>
@@ -678,20 +659,20 @@ function TrackerPage() {
       <Modal isOpen={isShareOpen} onClose={onShareClose} isCentered>
         <ModalOverlay />
         <ModalContent>
-            <ModalHeader>Zuschauer-Link teilen</ModalHeader>
+            <ModalHeader>{t('share.spectator_link_title')}</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
-            <Text mb={2}>Jeder mit diesem Link kann deinen Run ansehen (ohne Bearbeitungsrechte).</Text>
+            <Text mb={2}>{t('share.spectator_link_description')}</Text>
             <Flex>
                 <Input value={spectatorLink} isReadOnly />
                 <Button onClick={onCopyLink} ml={2}>
-                {hasCopiedLink ? 'Kopiert!' : 'Kopieren'}
+                {hasCopiedLink ? t('share.copied') : t('share.copy')}
                 </Button>
             </Flex>
             </ModalBody>
             <ModalFooter>
             <Button colorScheme="blue" onClick={onShareClose}>
-                Schließen
+                {t('share.close_button')}
             </Button>
             </ModalFooter>
         </ModalContent>

@@ -36,7 +36,25 @@
     "tm_hm": "TM/VM",
     "unknown_move": "Unbekannte Attacke",
     "loading_error": "Pokémon-Daten konnten nicht geladen werden.",
-    "close_button": "Schließen"
+    "close_button": "Schließen",
+    "type": "Typ",
+    "category": "Kategorie",
+    "power": "Stärke",
+    "accuracy": "Genauigkeit",
+    "pp": "AP",
+    "description": "Beschreibung",
+    "evolutions": "Entwicklungen"
+  },
+  "evolution_triggers": {
+    "level-up": "Level {{level}}",
+    "trade": "Tausch",
+    "use-item": "Benutze {{item}}",
+    "other": "Spezial"
+  },
+  "damage_class": {
+    "physical": "Physisch",
+    "special": "Speziell",
+    "status": "Status"
   },
   "methods": {
     "level-up": "Durch Levelanstieg",
@@ -74,7 +92,7 @@
     "close_button": "Schließen",
     "save_button": "Speichern"
   },
-    "settings": {
+  "settings": {
     "show_columns_title": "Elemente anzeigen",
     "nickname_column": "Nickname-Spalte",
     "static_encounters": "Statische Begegnungen",
@@ -107,16 +125,29 @@
     "delete_button": "Löschen"
   },
   "teambuilder": {
-    "back_to_tracker": "Zurück zum Tracker",
     "title": "Teamplanner",
     "your_team": "Dein Team",
     "your_box": "Deine Box",
-    "no_pokemon_caught": "Du hast noch keine Pokémon gefangen."
+    "no_pokemon_caught": "Du hast noch keine Pokémon gefangen.",
+    "fainted_pokemon": "Besiegte Pokémon",
+    "no_fainted_pokemon": "Keine besiegten Pokémon.",
+    "missed_encounters": "Verpasste Begegnungen",
+    "no_missed_encounters": "Keine verpassten Begegnungen.",
+    "empty_team_prompt": "Dein Team ist leer. Klicke auf ein Pokémon aus der Box, um es hinzuzufügen.",
+    "empty_box": "Deine Box ist leer."
   },
-    "subnav": {
+  "subnav": {
     "encounters": "Begegnungen",
     "teambuilder": "Teamplanner",
     "statistics": "Statistiken"
+  },
+  "share": {
+    "share_button": "Teilen",
+    "spectator_link_title": "Zuschauer-Link teilen",
+    "spectator_link_description": "Jeder mit diesem Link kann deinen Run ansehen (ohne Bearbeitungsrechte).",
+    "copy": "Kopieren",
+    "copied": "Kopiert!",
+    "close_button": "Schließen",
+    "invite_code_label": "Invite Code"
   }
-  
 }
