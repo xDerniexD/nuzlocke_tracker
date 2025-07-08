@@ -6,10 +6,8 @@ generatepokedexwithevolutions.js
 getdata.js
 output
 generatemoves.js
-seedFulldatabase.js
-seedPokedex.js
 seedDatabase.js
 generateAbilities.js
-seedMasterDatabase.js
 csv
 seedFromLocal.js
+veraltet

@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const MoveVersionDetailSchema = new mongoose.Schema({
   move: { type: mongoose.Schema.Types.ObjectId, ref: 'Move' }, 
-  level: { type: Number, required: true },
+  level: { type: Number },
+  tm_name: { type: String, default: null } // Stellt sicher, dass dieses Feld da ist
 }, { _id: false });
 
 const AbilitySlotSchema = new mongoose.Schema({
@@ -16,12 +17,11 @@ const PokemonSchema = new mongoose.Schema({
   name_slug: { type: String, required: true, unique: true, index: true },
   name_en: { type: String, required: true },
   name_de: { type: String },
-  evolutionChainId: { type: Number }, // Dieses Feld ist entscheidend
+  evolutionChainId: { type: Number },
   types: { type: [String], default: [] },
   baseStats: { type: Object },
   abilities: [AbilitySlotSchema],
   moves: { type: Object }
 });
 
-PokemonSchema.index({ name_en: 'text', name_de: 'text' });
 module.exports = mongoose.models.Pokemon || mongoose.model('Pokemon', PokemonSchema);
