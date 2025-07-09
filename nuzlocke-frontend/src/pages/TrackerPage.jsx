@@ -141,11 +141,18 @@ function TrackerPage() {
 
   const [rules, setRules] = useState({ dupesClause: true, shinyClause: true, customRules: '' });
 
-  const [viewSettings, setViewSettings] = useState({
-    showNicknames: true,
-    showStatic: true,
-    showGift: true,
+  const [viewSettings, setViewSettings] = useState(() => {
+    const savedSettings = localStorage.getItem(`viewSettings-${id}`);
+    return savedSettings ? JSON.parse(savedSettings) : {
+      showNicknames: true,
+      showStatic: true,
+      showGift: true,
+    };
   });
+
+  useEffect(() => {
+    localStorage.setItem(`viewSettings-${id}`, JSON.stringify(viewSettings));
+  }, [viewSettings, id]);
 
   const [selectedPokemonDetails, setSelectedPokemonDetails] = useState(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);

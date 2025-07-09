@@ -27,63 +27,75 @@ function TeambuilderPage() {
   const [box, setBox] = useState([]);
   const [fainted, setFainted] = useState([]);
   const [missed, setMissed] = useState([]);
-  
+
   const [saveStatus, setSaveStatus] = useState('saved');
 
   const { isOpen: isRulesOpen, onOpen: onRulesOpen, onClose: onRulesClose } = useDisclosure();
   const { isOpen: isShareOpen, onOpen: onShareOpen, onClose: onShareClose } = useDisclosure();
 
   const [rules, setRules] = useState({ dupesClause: true, shinyClause: true, customRules: '' });
-  const [viewSettings, setViewSettings] = useState({ showNicknames: true, showStatic: true, showGift: true });
+  const [viewSettings, setViewSettings] = useState(() => {
+    const savedSettings = localStorage.getItem(`viewSettings-${id}`);
+    return savedSettings ? JSON.parse(savedSettings) : {
+      showNicknames: true,
+      showStatic: true,
+      showGift: true,
+    };
+  });
+
+  useEffect(() => {
+    localStorage.setItem(`viewSettings-${id}`, JSON.stringify(viewSettings));
+  }, [viewSettings, id]);
+
   const { onCopy, hasCopied } = useClipboard(run?.inviteCode || '');
-  
+
   const spectatorLink = `${window.location.origin}/spectate/${run?.spectatorId}`;
   const { onCopy: onCopyLink, hasCopied: hasCopiedLink } = useClipboard(spectatorLink);
 
 
   const saveTeam = useCallback(async (newTeam) => {
-      setSaveStatus('saving');
-      try {
-          const teamEncounterIds = newTeam.map(p => p.pairId);
-          await api.put(`/nuzlockes/${id}/team`, { teamEncounterIds });
-          setSaveStatus('saved');
-      } catch (err) {
-          toast({ title: "Fehler beim Speichern des Teams.", status: "error", duration: 3000, isClosable: true });
-          setSaveStatus('error');
-      }
+    setSaveStatus('saving');
+    try {
+      const teamEncounterIds = newTeam.map(p => p.pairId);
+      await api.put(`/nuzlockes/${id}/team`, { teamEncounterIds });
+      setSaveStatus('saved');
+    } catch (err) {
+      toast({ title: "Fehler beim Speichern des Teams.", status: "error", duration: 3000, isClosable: true });
+      setSaveStatus('error');
+    }
   }, [id, toast]);
 
   const categorizedEncounters = useMemo(() => {
     if (!run) return { available: [], fainted: [], missed: [] };
     const available = [], fainted = [], missed = [];
     run.encounters.forEach(enc => {
-        const p1 = enc.pokemonId1 ? { pokemonId: enc.pokemonId1, name_de: enc.pokemon1, name_en: enc.pokemon1, nickname: enc.nickname1, types: enc.types1 } : null;
-        const p2 = run.type === 'soullink' && enc.pokemonId2 ? { pokemonId: enc.pokemonId2, name_de: enc.pokemon2, name_en: enc.pokemon2, nickname: enc.nickname2, types: enc.types2 } : null;
-        const pair = { pairId: enc._id, p1, p2 };
+      const p1 = enc.pokemonId1 ? { pokemonId: enc.pokemonId1, name_de: enc.pokemon1, name_en: enc.pokemon1, nickname: enc.nickname1, types: enc.types1 } : null;
+      const p2 = run.type === 'soullink' && enc.pokemonId2 ? { pokemonId: enc.pokemonId2, name_de: enc.pokemon2, name_en: enc.pokemon2, nickname: enc.nickname2, types: enc.types2 } : null;
+      const pair = { pairId: enc._id, p1, p2 };
 
-        if (enc.status1 === 'fainted' || enc.status2 === 'fainted') {
-            if (p1 || p2) fainted.push(pair);
-        } else if (enc.status1 === 'missed' || enc.status2 === 'missed') {
-            missed.push({ ...pair, location: i18n.language === 'de' ? enc.locationName_de : enc.locationName_en });
-        } else if ((enc.status1 === 'caught' || enc.status1 === 'gift') && p1) {
-            if (run.type === 'soullink') {
-                if ((enc.status2 === 'caught' || enc.status2 === 'gift') && p2) available.push(pair);
-            } else {
-                available.push(pair);
-            }
+      if (enc.status1 === 'fainted' || enc.status2 === 'fainted') {
+        if (p1 || p2) fainted.push(pair);
+      } else if (enc.status1 === 'missed' || enc.status2 === 'missed') {
+        missed.push({ ...pair, location: i18n.language === 'de' ? enc.locationName_de : enc.locationName_en });
+      } else if ((enc.status1 === 'caught' || enc.status1 === 'gift') && p1) {
+        if (run.type === 'soullink') {
+          if ((enc.status2 === 'caught' || enc.status2 === 'gift') && p2) available.push(pair);
+        } else {
+          available.push(pair);
         }
+      }
     });
     return { available, fainted, missed };
   }, [run, i18n.language]);
-  
+
   useEffect(() => {
-    if(run) {
-        const teamIds = new Set(run.team || []);
-        const teamFromRun = categorizedEncounters.available.filter(p => teamIds.has(p.pairId));
-        setTeam(teamFromRun);
-        setBox(categorizedEncounters.available.filter(p => !teamIds.has(p.pairId)));
-        setFainted(categorizedEncounters.fainted);
-        setMissed(categorizedEncounters.missed);
+    if (run) {
+      const teamIds = new Set(run.team || []);
+      const teamFromRun = categorizedEncounters.available.filter(p => teamIds.has(p.pairId));
+      setTeam(teamFromRun);
+      setBox(categorizedEncounters.available.filter(p => !teamIds.has(p.pairId)));
+      setFainted(categorizedEncounters.fainted);
+      setMissed(categorizedEncounters.missed);
     }
   }, [run, categorizedEncounters]);
 
@@ -109,7 +121,7 @@ function TeambuilderPage() {
       if (team.length < 6) {
         newTeam = [...team, pair];
       } else {
-        return; 
+        return;
       }
     } else {
       newTeam = team.filter(p => p.pairId !== pair.pairId);
@@ -127,7 +139,7 @@ function TeambuilderPage() {
       toast({ title: "Fehler beim Speichern der Regeln.", status: "error", duration: 3000, isClosable: true });
     }
   };
-  
+
   const getSaveStatusIndicator = () => {
     switch (saveStatus) {
       case 'saving': return <Tag colorScheme="blue"><Spinner size="xs" mr={2} />{t('tracker.saving_status')}</Tag>;
@@ -135,7 +147,7 @@ function TeambuilderPage() {
       default: return <Tag colorScheme="green"><CheckCircleIcon mr={2} />{t('tracker.saved_status')}</Tag>;
     }
   };
-  
+
   const teamSlotsUsed = team.length;
 
   if (loading) return <Flex justify="center" align="center" height="100vh"><Spinner size="xl" /></Flex>;
@@ -168,12 +180,12 @@ function TeambuilderPage() {
               </MenuList>
             </Menu>
             <Tooltip label={t('share.spectator_link_title')}>
-                <Button onClick={onShareOpen} leftIcon={<Icon as={FaShareAlt} />}>
-                    {t('share.share_button')}
-                </Button>
+              <Button onClick={onShareOpen} leftIcon={<Icon as={FaShareAlt} />}>
+                {t('share.share_button')}
+              </Button>
             </Tooltip>
           </HStack>
-          
+
           <VStack spacing={0}>
             <Heading as="h1" size="lg" textAlign="center">{run?.runName}</Heading>
             {run?.type === 'soullink' && run.inviteCode && (
@@ -187,13 +199,13 @@ function TeambuilderPage() {
 
           <Box minW="220px" textAlign="right">{getSaveStatusIndicator()}</Box>
         </Flex>
-        
+
         <SubNav />
-        
+
         <VStack spacing={8} align="stretch">
           <Box>
             <Heading as="h2" size="lg" mb={4}>{t('teambuilder.your_team')} ({teamSlotsUsed} / 6)</Heading>
-            <Flex wrap="wrap" gap={4} minH="160px" p={4} borderWidth={1} borderRadius="lg" bg="gray.50" _dark={{bg: 'gray.800'}}>
+            <Flex wrap="wrap" gap={4} minH="160px" p={4} borderWidth={1} borderRadius="lg" bg="gray.50" _dark={{ bg: 'gray.800' }}>
               {team.length > 0 ? team.map(pair => (
                 <PokemonPairCard key={pair.pairId} pair={pair} onClick={() => handlePairClick(pair, 'team')} isTeamMember />
               )) : <Text color="gray.500">{t('teambuilder.empty_team_prompt')}</Text>}
@@ -216,7 +228,7 @@ function TeambuilderPage() {
               </Flex>
             )}
           </Box>
-          
+
           <Divider />
 
           <Box>
@@ -244,7 +256,7 @@ function TeambuilderPage() {
                   }
                   return (
                     <Box key={pair.pairId} p={3} borderWidth={1} borderRadius="lg" bg="gray.100" _dark={{ bg: 'gray.700' }} minH="125px" minW="120px" display="flex" alignItems="center" justifyContent="center" opacity={0.6}>
-                        <Tooltip label={pair.location}><Text fontSize="sm" color="gray.500" noOfLines={3} textAlign="center">{pair.location}</Text></Tooltip>
+                      <Tooltip label={pair.location}><Text fontSize="sm" color="gray.500" noOfLines={3} textAlign="center">{pair.location}</Text></Tooltip>
                     </Box>
                   );
                 })}
@@ -253,26 +265,26 @@ function TeambuilderPage() {
           </Box>
         </VStack>
       </Container>
-      
+
       <Modal isOpen={isShareOpen} onClose={onShareClose} isCentered>
         <ModalOverlay />
         <ModalContent>
-            <ModalHeader>{t('share.spectator_link_title')}</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
+          <ModalHeader>{t('share.spectator_link_title')}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
             <Text mb={2}>{t('share.spectator_link_description')}</Text>
             <Flex>
-                <Input value={spectatorLink} isReadOnly />
-                <Button onClick={onCopyLink} ml={2}>
+              <Input value={spectatorLink} isReadOnly />
+              <Button onClick={onCopyLink} ml={2}>
                 {hasCopiedLink ? t('share.copied') : t('share.copy')}
-                </Button>
+              </Button>
             </Flex>
-            </ModalBody>
-            <ModalFooter>
+          </ModalBody>
+          <ModalFooter>
             <Button colorScheme="blue" onClick={onShareClose}>
-                {t('share.close_button')}
+              {t('share.close_button')}
             </Button>
-            </ModalFooter>
+          </ModalFooter>
         </ModalContent>
       </Modal>
 
@@ -283,9 +295,9 @@ function TeambuilderPage() {
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
-              <FormControl><Checkbox isChecked={rules?.dupesClause} onChange={(e) => setRules({...rules, dupesClause: e.target.checked})}>{t('rules.dupes_clause')}</Checkbox></FormControl>
-              <FormControl><Checkbox isChecked={rules?.shinyClause} onChange={(e) => setRules({...rules, shinyClause: e.target.checked})}>{t('rules.shiny_clause')}</Checkbox></FormControl>
-              <FormControl><FormLabel>{t('rules.custom_rules_label')}</FormLabel><Textarea value={rules?.customRules} onChange={(e) => setRules({...rules, customRules: e.target.value})} placeholder={t('rules.custom_rules_placeholder')} /></FormControl>
+              <FormControl><Checkbox isChecked={rules?.dupesClause} onChange={(e) => setRules({ ...rules, dupesClause: e.target.checked })}>{t('rules.dupes_clause')}</Checkbox></FormControl>
+              <FormControl><Checkbox isChecked={rules?.shinyClause} onChange={(e) => setRules({ ...rules, shinyClause: e.target.checked })}>{t('rules.shiny_clause')}</Checkbox></FormControl>
+              <FormControl><FormLabel>{t('rules.custom_rules_label')}</FormLabel><Textarea value={rules?.customRules} onChange={(e) => setRules({ ...rules, customRules: e.target.value })} placeholder={t('rules.custom_rules_placeholder')} /></FormControl>
             </VStack>
           </ModalBody>
           <ModalFooter><Button variant="ghost" mr={3} onClick={onRulesClose}>{t('rules.close_button')}</Button><Button colorScheme="blue" onClick={handleSaveRules}>{t('rules.save_button')}</Button></ModalFooter>
