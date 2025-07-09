@@ -20,7 +20,7 @@ router.get('/evolution-chain/:chainId', async (req, res) => {
     try {
         const { chainId } = req.params;
         const response = await axios.get(`https://pokeapi.co/api/v2/evolution-chain/${chainId}/`);
-        
+
         let chain = response.data.chain;
         const evolutionPath = [];
 
@@ -56,7 +56,7 @@ router.get('/:id', async (req, res) => {
     try {
         const pokemonId = parseInt(req.params.id, 10);
         if (isNaN(pokemonId)) return res.status(400).json({ message: "Ungültige Pokémon-ID." });
-        
+
         const pokemon = await Pokemon.findOne({ id: pokemonId })
             .populate('abilities.ability')
             .lean();
@@ -82,7 +82,7 @@ router.get('/:id', async (req, res) => {
                 })).filter(ms => ms.move);
             });
         }
-        
+
         res.json(pokemon);
     } catch (error) {
         console.error("Fehler beim Abrufen der Pokémon-Details:", error);

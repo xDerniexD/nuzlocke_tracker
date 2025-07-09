@@ -125,7 +125,7 @@
     "delete_button": "Löschen"
   },
   "teambuilder": {
-    "title": "Teamplanner",
+    "title": "Teamplaner",
     "your_team": "Dein Team",
     "your_box": "Deine Box",
     "no_pokemon_caught": "Du hast noch keine Pokémon gefangen.",
@@ -138,7 +138,7 @@
   },
   "subnav": {
     "encounters": "Begegnungen",
-    "teambuilder": "Teamplanner",
+    "teambuilder": "Teamplaner",
     "statistics": "Statistiken"
   },
   "share": {

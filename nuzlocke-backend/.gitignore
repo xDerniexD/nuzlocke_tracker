@@ -1,13 +1,8 @@
 node_modules
-.env
-generateGameData.js
-generatePokedex.js
-generatepokedexwithevolutions.js
-getdata.js
 output
-generatemoves.js
-seedDatabase.js
-generateAbilities.js
 csv
-seedFromLocal.js
 veraltet
+.env
+generatemoves.js
+generateAbilities.js
+seedDatabase.js
