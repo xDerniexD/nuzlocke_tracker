@@ -208,7 +208,7 @@
       },
       "type": "city",
       "sequence": 16,
-      "hasStandardEncounter": false,
+      "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": [
         {
@@ -1570,8 +1570,14 @@
       "name": "Rivale Barry - Route 203",
       "sequence": 4.5,
       "team": [
-        { "name": "Staralili", "level": 9 },
-        { "name": "Panflam", "level": 11 }
+        {
+          "name": "Staralili",
+          "level": 9
+        },
+        {
+          "name": "Panflam",
+          "level": 11
+        }
       ]
     }
   ]
