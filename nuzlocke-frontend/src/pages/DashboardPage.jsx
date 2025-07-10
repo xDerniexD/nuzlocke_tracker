@@ -9,9 +9,10 @@ import {
   AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader,
   AlertDialogContent, AlertDialogOverlay, useDisclosure, useToast,
   Grid, Tooltip, Radio, RadioGroup, Modal, ModalOverlay, ModalContent,
-  ModalHeader, ModalCloseButton, ModalBody, ModalFooter, useClipboard,
+  ModalHeader, ModalCloseButton, ModalBody, ModalFooter, useClipboard, InputGroup, InputRightElement,
 } from '@chakra-ui/react';
 import { MdPlayArrow, MdDelete, MdArchive, MdUnarchive, MdPeople, MdShare } from 'react-icons/md';
+import { FaUserPlus } from 'react-icons/fa'; // Icon für Editoren
 
 function DashboardPage({ user, onLogout }) {
   const { t } = useTranslation();
@@ -21,20 +22,26 @@ function DashboardPage({ user, onLogout }) {
   const [runs, setRuns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   const [newRunName, setNewRunName] = useState('');
   const [selectedGame, setSelectedGame] = useState('platinum');
   const [runType, setRunType] = useState('solo');
-  const [inviteCodeInput, setInviteCodeInput] = useState(''); // Umbenannt, um Konflikte zu vermeiden
+  const [inviteCodeInput, setInviteCodeInput] = useState('');
+  const [editorInviteCodeInput, setEditorInviteCodeInput] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+  const [isJoiningAsEditor, setIsJoiningAsEditor] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
 
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
-  // NEU: States für das Einladungs-Modal
   const { isOpen: isInviteOpen, onOpen: onInviteOpen, onClose: onInviteClose } = useDisclosure();
+  const { isOpen: isEditorInviteOpen, onOpen: onEditorInviteOpen, onClose: onEditorInviteClose } = useDisclosure();
+
   const [runToInvite, setRunToInvite] = useState(null);
+  const [runToInviteEditor, setRunToInviteEditor] = useState(null);
+  const [generatedEditorCode, setGeneratedEditorCode] = useState('');
   const { onCopy, setValue, hasCopied } = useClipboard("");
+  const { onCopy: onCopyEditorCode, hasCopied: hasCopiedEditorCode } = useClipboard(generatedEditorCode);
 
   const [runToDelete, setRunToDelete] = useState(null);
   const cancelRef = useRef();
@@ -47,7 +54,7 @@ function DashboardPage({ user, onLogout }) {
         if (Array.isArray(response.data)) {
           setRuns(response.data);
         } else {
-          setRuns([]); 
+          setRuns([]);
         }
       } catch (err) {
         setError(t('dashboard.error_loading'));
@@ -71,7 +78,7 @@ function DashboardPage({ user, onLogout }) {
       if (newRun.type === 'soullink' && newRun.inviteCode) {
         setRuns(prevRuns => [...prevRuns, newRun]);
         setNewRunName('');
-        handleInviteClick(newRun); // NEU: Öffnet direkt das Invite-Modal
+        handleInviteClick(newRun);
       } else {
         navigate(`/nuzlocke/${newRun._id}`);
       }
@@ -81,31 +88,58 @@ function DashboardPage({ user, onLogout }) {
       setIsCreating(false);
     }
   };
-  
+
   const handleJoinRun = async (event) => {
     event.preventDefault();
     if (!inviteCodeInput) return;
     setIsJoining(true);
     try {
-        const response = await api.post('/nuzlockes/join', { inviteCode: inviteCodeInput.trim() });
-        const joinedRun = response.data;
-        toast({ title: "Erfolgreich beigetreten!", description: `Du bist jetzt Teil von "${joinedRun.runName}".`, status: "success", duration: 5000, isClosable: true });
-        if (joinedRun && joinedRun._id) {
-          setRuns(prevRuns => [...prevRuns, joinedRun]);
-        }
-        setInviteCodeInput('');
+      const response = await api.post('/nuzlockes/join', { inviteCode: inviteCodeInput.trim() });
+      const joinedRun = response.data;
+      toast({ title: "Erfolgreich beigetreten!", description: `Du bist jetzt Teil von "${joinedRun.runName}".`, status: "success", duration: 5000, isClosable: true });
+      if (joinedRun && joinedRun._id) {
+        setRuns(prevRuns => [...prevRuns, joinedRun]);
+      }
+      setInviteCodeInput('');
     } catch (err) {
-        toast({ title: "Beitritt fehlgeschlagen", description: err.response?.data?.message || t('dashboard.join_error'), status: "error", duration: 5000, isClosable: true });
+      toast({ title: "Beitritt fehlgeschlagen", description: err.response?.data?.message || t('dashboard.join_error'), status: "error", duration: 5000, isClosable: true });
     } finally {
-        setIsJoining(false);
+      setIsJoining(false);
     }
   };
-  
-  // NEU: Funktion, um das Invite-Modal zu öffnen
+
+  const handleJoinAsEditor = async (e) => {
+    e.preventDefault();
+    if (!editorInviteCodeInput) return;
+    setIsJoiningAsEditor(true);
+    try {
+      const res = await api.post('/nuzlockes/join-editor', { editorInviteCode: editorInviteCodeInput.trim() });
+      toast({ title: "Erfolgreich beigetreten!", description: `Du kannst diesen Run jetzt bearbeiten.`, status: "success", duration: 5000, isClosable: true });
+      setEditorInviteCodeInput('');
+      navigate(`/nuzlocke/${res.data.runId}`);
+    } catch (err) {
+      toast({ title: "Beitritt als Editor fehlgeschlagen", description: err.response?.data?.message, status: "error", isClosable: true });
+    } finally {
+      setIsJoiningAsEditor(false);
+    }
+  };
+
   const handleInviteClick = (run) => {
     setRunToInvite(run);
-    setValue(run.inviteCode); // Setzt den Wert, der kopiert werden soll
+    setValue(run.inviteCode);
     onInviteOpen();
+  };
+
+  const handleOpenEditorInvite = async (run) => {
+    setRunToInviteEditor(run);
+    setGeneratedEditorCode('... generiere');
+    onEditorInviteOpen();
+    try {
+      const res = await api.post(`/nuzlockes/${run._id}/invite-editor`);
+      setGeneratedEditorCode(res.data.editorInviteCode);
+    } catch (err) {
+      setGeneratedEditorCode('Fehler beim Generieren des Codes.');
+    }
   };
 
   const handleDeleteClick = (runId) => {
@@ -163,37 +197,43 @@ function DashboardPage({ user, onLogout }) {
           <Heading as="h1" size="lg">{t('dashboard.welcome', { username: user.username })}</Heading>
           <Button onClick={onLogout} colorScheme="gray">{t('dashboard.logout_button')}</Button>
         </Flex>
-      
-        <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={10} my={8}>
-            <Box p={6} borderWidth={1} borderRadius="lg">
-                <Heading as="h2" size="md" mb={4}>{t('dashboard.new_run_header')}</Heading>
-                <form onSubmit={handleCreateRun}>
-                    <VStack spacing={4}>
-                        <Input placeholder={t('dashboard.run_name_placeholder')} value={newRunName} onChange={(e) => setNewRunName(e.target.value)} />
-                        <Select value={selectedGame} onChange={(e) => setSelectedGame(e.target.value)}>
-                            <option value="platinum">{t('dashboard.game_platinum')}</option>
-                        </Select>
-                        <RadioGroup onChange={setRunType} value={runType}>
-                            <HStack>
-                                <Radio value="solo">{t('dashboard.run_type_solo')}</Radio>
-                                <Radio value="soullink">{t('dashboard.run_type_soullink')}</Radio>
-                            </HStack>
-                        </RadioGroup>
-                        <Button type="submit" colorScheme="teal" width="100%" isLoading={isCreating}>{t('dashboard.start_button')}</Button>
-                    </VStack>
-                </form>
-            </Box>
-            <Box p={6} borderWidth={1} borderRadius="lg">
-                <Heading as="h2" size="md" mb={4}>{t('dashboard.join_soullink_header')}</Heading>
-                <form onSubmit={handleJoinRun}>
-                    <VStack spacing={4}>
-                        <Input placeholder={t('dashboard.join_placeholder')} value={inviteCodeInput} onChange={(e) => setInviteCodeInput(e.target.value)} />
-                        <Button type="submit" colorScheme="purple" width="100%" isLoading={isJoining}>{t('dashboard.join_button')}</Button>
-                    </VStack>
-                </form>
-            </Box>
+
+        <Grid templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} gap={10} my={8}>
+          <Box p={6} borderWidth={1} borderRadius="lg">
+            <Heading as="h2" size="md" mb={4}>{t('dashboard.new_run_header')}</Heading>
+            <form onSubmit={handleCreateRun}>
+              <VStack spacing={4}>
+                <Input placeholder={t('dashboard.run_name_placeholder')} value={newRunName} onChange={(e) => setNewRunName(e.target.value)} />
+                <Select value={selectedGame} onChange={(e) => setSelectedGame(e.target.value)}>
+                  <option value="platinum">{t('dashboard.game_platinum')}</option>
+                </Select>
+                <RadioGroup onChange={setRunType} value={runType}>
+                  <HStack><Radio value="solo">{t('dashboard.run_type_solo')}</Radio><Radio value="soullink">{t('dashboard.run_type_soullink')}</Radio></HStack>
+                </RadioGroup>
+                <Button type="submit" colorScheme="teal" width="100%" isLoading={isCreating}>{t('dashboard.start_button')}</Button>
+              </VStack>
+            </form>
+          </Box>
+          <Box p={6} borderWidth={1} borderRadius="lg">
+            <Heading as="h2" size="md" mb={4}>{t('dashboard.join_soullink_header')}</Heading>
+            <form onSubmit={handleJoinRun}>
+              <VStack spacing={4}>
+                <Input placeholder={t('dashboard.join_placeholder')} value={inviteCodeInput} onChange={(e) => setInviteCodeInput(e.target.value)} />
+                <Button type="submit" colorScheme="purple" width="100%" isLoading={isJoining}>{t('dashboard.join_button')}</Button>
+              </VStack>
+            </form>
+          </Box>
+          <Box p={6} borderWidth={1} borderRadius="lg">
+            <Heading as="h2" size="md" mb={4}>Als Editor beitreten</Heading>
+            <form onSubmit={handleJoinAsEditor}>
+              <VStack spacing={4}>
+                <Input placeholder="Editor-Code eingeben" value={editorInviteCodeInput} onChange={(e) => setEditorInviteCodeInput(e.target.value)} />
+                <Button type="submit" colorScheme="orange" width="100%" isLoading={isJoiningAsEditor}>Beitreten</Button>
+              </VStack>
+            </form>
+          </Box>
         </Grid>
-      
+
         <Divider my={8} />
 
         <Box as="section">
@@ -202,62 +242,35 @@ function DashboardPage({ user, onLogout }) {
               {showArchived ? t('dashboard.archived_runs_header') : t('dashboard.your_runs_header')}
             </Heading>
             <FormControl display="flex" alignItems="center" width="auto">
-              <FormLabel htmlFor="show-archive" mb="0" mr={2}>
-                {t('dashboard.show_archived_label')}
-              </FormLabel>
+              <FormLabel htmlFor="show-archive" mb="0" mr={2}>{t('dashboard.show_archived_label')}</FormLabel>
               <Switch id="show-archive" isChecked={showArchived} onChange={() => setShowArchived(!showArchived)} />
             </FormControl>
           </Flex>
 
           {error && <Alert status="error" borderRadius="md" my={4}><AlertIcon />{error}</Alert>}
-          
+
           {runsToDisplay.length === 0 ? (
-            <Box p={4} borderWidth={1} borderRadius="lg" bg="gray.50" _dark={{bg: "gray.700"}}>
-                <Text>{showArchived ? t('dashboard.no_archived_runs') : t('dashboard.no_active_runs')}</Text>
-            </Box>
+            <Box p={4} borderWidth={1} borderRadius="lg" bg="gray.50" _dark={{ bg: "gray.700" }}><Text>{showArchived ? t('dashboard.no_archived_runs') : t('dashboard.no_active_runs')}</Text></Box>
           ) : (
             <List spacing={3}>
               {runsToDisplay.map(run => (
                 <Flex key={run._id} p={3} borderWidth={1} borderRadius="lg" _hover={{ bg: 'gray.100', _dark: { bg: 'gray.700' } }} justifyContent="space-between" alignItems="center">
                   <Link to={`/nuzlocke/${run._id}`} style={{ flexGrow: 1, textDecoration: 'none' }}>
-                      <Flex align="center">
+                    <Flex align="center">
                       <ListIcon as={run.type === 'soullink' ? MdPeople : MdPlayArrow} color={run.type === 'soullink' ? 'purple.500' : 'green.500'} w={6} h={6} />
                       <Box>
-                          <Text fontWeight="bold">{run.runName}</Text>
-                          <Text fontSize="sm" color="gray.500" textTransform="capitalize">{run.game} ({run.type})</Text>
+                        <Text fontWeight="bold">{run.runName}</Text>
+                        <Text fontSize="sm" color="gray.500" textTransform="capitalize">{run.game} ({run.type})</Text>
                       </Box>
-                      </Flex>
+                    </Flex>
                   </Link>
                   <HStack>
-                      {/* NEU: Button zum Anzeigen des Invite-Codes */}
-                      {run.type === 'soullink' && run.inviteCode && (
-                        <Tooltip label="Partner einladen">
-                            <IconButton
-                                aria-label="Partner einladen"
-                                icon={<MdShare />}
-                                variant="ghost"
-                                colorScheme="purple"
-                                onClick={() => handleInviteClick(run)}
-                            />
-                        </Tooltip>
-                      )}
-                      <Tooltip label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')}>
-                          <IconButton
-                              aria-label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')}
-                              icon={run.isArchived ? <MdUnarchive /> : <MdArchive />}
-                              variant="ghost"
-                              onClick={() => handleToggleArchive(run._id)}
-                          />
-                      </Tooltip>
-                      <Tooltip label={t('dashboard.delete_run_aria')}>
-                          <IconButton
-                              aria-label={t('dashboard.delete_run_aria')}
-                              icon={<MdDelete />}
-                              colorScheme="red"
-                              variant="ghost"
-                              onClick={() => handleDeleteClick(run._id)}
-                          />
-                      </Tooltip>
+                    {run.type === 'soullink' && run.inviteCode && (
+                      <Tooltip label="Partner einladen"><IconButton aria-label="Partner einladen" icon={<MdShare />} variant="ghost" colorScheme="purple" onClick={() => handleInviteClick(run)} /></Tooltip>
+                    )}
+                    <Tooltip label="Editoren einladen"><IconButton aria-label="Editoren einladen" icon={<FaUserPlus />} variant="ghost" colorScheme="orange" onClick={() => handleOpenEditorInvite(run)} /></Tooltip>
+                    <Tooltip label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')}><IconButton aria-label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')} icon={run.isArchived ? <MdUnarchive /> : <MdArchive />} variant="ghost" onClick={() => handleToggleArchive(run._id)} /></Tooltip>
+                    <Tooltip label={t('dashboard.delete_run_aria')}><IconButton aria-label={t('dashboard.delete_run_aria')} icon={<MdDelete />} colorScheme="red" variant="ghost" onClick={() => handleDeleteClick(run._id)} /></Tooltip>
                   </HStack>
                 </Flex>
               ))}
@@ -266,50 +279,53 @@ function DashboardPage({ user, onLogout }) {
         </Box>
       </Box>
 
-      {/* NEU: Modal zum Anzeigen des Invite-Codes */}
-      <Modal isOpen={isInviteOpen} onClose={onInviteClose} isCentered>
+      <Modal isOpen={isEditorInviteOpen} onClose={onEditorInviteClose}>
         <ModalOverlay />
         <ModalContent>
-            <ModalHeader>Partner einladen</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-                <Text mb={2}>Gib diesen Code an deinen Soullink-Partner, damit er oder sie beitreten kann:</Text>
-                <Flex>
-                    <Input value={runToInvite?.inviteCode || ''} isReadOnly fontSize="lg" fontWeight="bold" textAlign="center" />
-                    <Button onClick={onCopy} ml={2}>
-                        {hasCopied ? 'Kopiert!' : 'Kopieren'}
-                    </Button>
-                </Flex>
-            </ModalBody>
-            <ModalFooter>
-                <Button colorScheme="blue" onClick={onInviteClose}>Schließen</Button>
-            </ModalFooter>
+          <ModalHeader>Editor einladen für "{runToInviteEditor?.runName}"</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text mb={4}>Teile diesen Code mit Personen, die deinen Run bearbeiten dürfen. Der Code ist wiederverwendbar.</Text>
+            <InputGroup>
+              <Input value={generatedEditorCode} isReadOnly />
+              <InputRightElement width="4.5rem">
+                <Button h="1.75rem" size="sm" onClick={onCopyEditorCode}>
+                  {hasCopiedEditorCode ? 'Kopiert' : 'Kopieren'}
+                </Button>
+              </InputRightElement>
+            </InputGroup>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="blue" onClick={onEditorInviteClose}>Schließen</Button>
+          </ModalFooter>
         </ModalContent>
       </Modal>
 
-      <AlertDialog
-        isOpen={isDeleteOpen}
-        leastDestructiveRef={cancelRef}
-        onClose={onDeleteClose}
-      >
-        <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              {t('dashboard.delete_run_title')}
-            </AlertDialogHeader>
-            <AlertDialogBody>
-              {t('dashboard.delete_run_body')}
-            </AlertDialogBody>
-            <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onDeleteClose}>
-                {t('dashboard.cancel_button')}
-              </Button>
-              <Button colorScheme="red" onClick={confirmDelete} ml={3}>
-                {t('dashboard.delete_button')}
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
+      <Modal isOpen={isInviteOpen} onClose={onInviteClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Partner einladen</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text mb={2}>Gib diesen Code an deinen Soullink-Partner, damit er oder sie beitreten kann:</Text>
+            <Flex>
+              <Input value={runToInvite?.inviteCode || ''} isReadOnly fontSize="lg" fontWeight="bold" textAlign="center" />
+              <Button onClick={onCopy} ml={2}>{hasCopied ? 'Kopiert!' : 'Kopieren'}</Button>
+            </Flex>
+          </ModalBody>
+          <ModalFooter><Button colorScheme="blue" onClick={onInviteClose}>Schließen</Button></ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <AlertDialog isOpen={isDeleteOpen} leastDestructiveRef={cancelRef} onClose={onDeleteClose}>
+        <AlertDialogOverlay><AlertDialogContent>
+          <AlertDialogHeader fontSize="lg" fontWeight="bold">{t('dashboard.delete_run_title')}</AlertDialogHeader>
+          <AlertDialogBody>{t('dashboard.delete_run_body')}</AlertDialogBody>
+          <AlertDialogFooter>
+            <Button ref={cancelRef} onClick={onDeleteClose}>{t('dashboard.cancel_button')}</Button>
+            <Button colorScheme="red" onClick={confirmDelete} ml={3}>{t('dashboard.delete_button')}</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent></AlertDialogOverlay>
       </AlertDialog>
     </>
   );

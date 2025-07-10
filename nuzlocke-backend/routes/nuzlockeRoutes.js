@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Nuzlocke = require('../models/Nuzlocke');
+const Pokemon = require('../models/Pokemon'); // Importiert für den Zugriff auf Pokémon-Daten
 const { protect } = require('../middleware/authMiddleware');
+const { checkEditAccess } = require('../middleware/accessMiddleware'); // Die neue Berechtigungs-Middleware
 const { nanoid } = require('nanoid');
 const fs = require('fs');
 const path = require('path');
-const Pokemon = require('../models/Pokemon');
 
 // POST /api/nuzlockes - Erstellen eines neuen Runs
 router.post('/', protect, async (req, res) => {
@@ -43,8 +44,10 @@ router.post('/', protect, async (req, res) => {
     const newNuzlockeData = {
       runName, game, type,
       participants: [req.user._id],
+      editors: [], // Initial leeres Editor-Array
       encounters: initialEncounters,
-      spectatorId: nanoid(10)
+      spectatorId: nanoid(10),
+      editorInviteCode: nanoid(8) // Initial einen Editor-Code erstellen
     };
 
     if (type === 'soullink') {
@@ -73,7 +76,7 @@ router.get('/spectate/:spectatorId', async (req, res) => {
   }
 });
 
-// POST /api/nuzlockes/join
+// POST /api/nuzlockes/join - Für Soullink-Partner
 router.post('/join', protect, async (req, res) => {
   try {
     const { inviteCode } = req.body;
@@ -94,43 +97,96 @@ router.post('/join', protect, async (req, res) => {
   }
 });
 
-// GET /api/nuzlockes
+// GET /api/nuzlockes - Holt alle Runs eines Benutzers (als Teilnehmer oder Editor)
 router.get('/', protect, async (req, res) => {
   try {
-    const nuzlockes = await Nuzlocke.find({ participants: req.user._id });
+    const nuzlockes = await Nuzlocke.find({
+      $or: [
+        { participants: req.user._id },
+        { editors: req.user._id }
+      ]
+    });
     res.json(nuzlockes);
   } catch (error) {
     res.status(500).json({ message: 'Serverfehler beim Abrufen der Nuzlockes', error: error.message });
   }
 });
 
-// GET /api/nuzlockes/:id
+// GET /api/nuzlockes/:id - Holt einen spezifischen Run
 router.get('/:id', protect, async (req, res) => {
   try {
-    const nuzlocke = await Nuzlocke.findById(req.params.id).populate('participants', 'username');
+    const nuzlocke = await Nuzlocke.findById(req.params.id).populate('participants', 'username').populate('editors', 'username');
     if (!nuzlocke) return res.status(404).json({ message: 'Nuzlocke-Run nicht gefunden.' });
-    const isParticipant = nuzlocke.participants.some(p => p._id.toString() === req.user._id.toString());
-    if (!isParticipant) return res.status(401).json({ message: 'Nicht autorisiert.' });
+
+    const isParticipant = nuzlocke.participants.some(p => p._id.equals(req.user._id));
+    const isEditor = nuzlocke.editors.some(e => e._id.equals(req.user._id));
+
+    if (!isParticipant && !isEditor) {
+      return res.status(403).json({ message: 'Nicht autorisiert.' });
+    }
     res.json(nuzlocke);
   } catch (error) {
     res.status(500).json({ message: 'Serverfehler beim Abrufen des Nuzlocke-Runs', error: error.message });
   }
 });
 
-// PUT /api/nuzlockes/:id
-router.put('/:id', protect, async (req, res) => {
+// POST /api/nuzlockes/:id/invite-editor - Generiert/holt einen Einladungscode für Editoren
+router.post('/:id/invite-editor', protect, async (req, res) => {
   try {
+    const nuzlocke = await Nuzlocke.findById(req.params.id);
+    if (!nuzlocke) return res.status(404).json({ message: 'Run nicht gefunden.' });
+
+    if (!nuzlocke.participants.some(p => p.equals(req.user._id))) {
+      return res.status(403).json({ message: 'Nur Teilnehmer können Editoren einladen.' });
+    }
+
+    if (!nuzlocke.editorInviteCode) {
+      nuzlocke.editorInviteCode = nanoid(8);
+      await nuzlocke.save();
+    }
+
+    res.json({ editorInviteCode: nuzlocke.editorInviteCode });
+  } catch (error) {
+    res.status(500).json({ message: 'Fehler beim Erstellen des Einladungscodes.' });
+  }
+});
+
+// POST /api/nuzlockes/join-editor - Ein Editor tritt einem Run bei
+router.post('/join-editor', protect, async (req, res) => {
+  try {
+    const { editorInviteCode } = req.body;
+    if (!editorInviteCode) return res.status(400).json({ message: 'Einladungscode fehlt.' });
+
+    const nuzlocke = await Nuzlocke.findOne({ editorInviteCode });
+    if (!nuzlocke) return res.status(404).json({ message: 'Kein Run mit diesem Code gefunden.' });
+    if (nuzlocke.participants.some(p => p.equals(req.user._id)) || nuzlocke.editors.some(e => e.equals(req.user._id))) {
+      return res.status(400).json({ message: 'Du bist bereits Teil dieses Runs.' });
+    }
+
+    nuzlocke.editors.push(req.user._id);
+    await nuzlocke.save();
+
+    res.json({ message: 'Erfolgreich als Editor beigetreten!', runId: nuzlocke._id });
+  } catch (error) {
+    res.status(500).json({ message: 'Fehler beim Beitreten als Editor.' });
+  }
+});
+
+// --- GESCHÜTZTE ROUTEN FÜR TEILNEHMER & EDITOREN ---
+router.use('/:id', protect, checkEditAccess); // Alle folgenden Routen nutzen die Middleware
+
+// PUT /api/nuzlockes/:id - Aktualisiert einen Encounter
+router.put('/:id', async (req, res) => {
+  try {
+    const nuzlocke = req.nuzlocke; // von Middleware
     const { updatedEncounter } = req.body;
+
     if (!updatedEncounter) {
-      if (req.body.rules) return updateRules(req, res);
       return res.status(400).json({ message: 'Keine Encounter-Daten zum Aktualisieren gesendet.' });
     }
-    const nuzlocke = await Nuzlocke.findById(req.params.id);
-    if (!nuzlocke) return res.status(404).json({ message: 'Nuzlocke-Run nicht gefunden.' });
-    const isParticipant = nuzlocke.participants.some(p => p._id.toString() === req.user._id.toString());
-    if (!isParticipant) return res.status(401).json({ message: 'Nicht autorisiert.' });
+
     const encounterIndex = nuzlocke.encounters.findIndex(e => e._id.toString() === updatedEncounter._id);
-    if (encounterIndex === -1) return res.status(404).json({ message: 'Encounter in diesem Run nicht gefunden.' });
+    if (encounterIndex === -1) return res.status(404).json({ message: 'Encounter nicht gefunden.' });
 
     const oldEncounter = nuzlocke.encounters[encounterIndex];
     const p1_newly_caught = (oldEncounter.status1 === 'pending' || oldEncounter.status1 === 'gift') && (updatedEncounter.status1 === 'caught');
@@ -148,124 +204,34 @@ router.put('/:id', protect, async (req, res) => {
     nuzlocke.markModified('encounters');
     nuzlocke.markModified('team');
 
-    const savedNuzlocke = await nuzlocke.save();
-    const finalUpdatedEncounter = savedNuzlocke.encounters[encounterIndex];
-    const io = req.app.get('socketio');
-    io.to(req.params.id).emit('nuzlocke:updated', {
-      updatedEncounter: finalUpdatedEncounter,
-      senderId: req.user._id.toString()
-    });
-    res.json(finalUpdatedEncounter);
-  } catch (error) {
-    console.error("Update-Fehler:", error);
-    res.status(500).json({ message: 'Serverfehler beim Aktualisieren des Nuzlocke-Runs', error: error.message });
-  }
-});
-
-// Route: POST /api/nuzlockes/:id/legendary
-router.post('/:id/legendary', protect, async (req, res) => {
-  try {
-    const { pokemonId, encounterType, playerId } = req.body; // playerId kann jetzt übergeben werden
-    const nuzlocke = await Nuzlocke.findById(req.params.id);
-
-    if (!nuzlocke) {
-      return res.status(404).json({ message: 'Nuzlocke-Run nicht gefunden.' });
-    }
-    // Der ausführende Nutzer muss Teilnehmer sein
-    if (!nuzlocke.participants.some(p => p._id.equals(req.user._id))) {
-      return res.status(401).json({ message: 'Nicht autorisiert.' });
-    }
-
-    // Bestimme die Spieler-ID: entweder die übergebene oder die des aktuellen Nutzers
-    const targetPlayerId = playerId || req.user._id;
-
-    let pokemonName = 'Generic'; // Standardname für generische Einträge
-
-    // Wenn es keine generische Begegnung ist, suche den Pokémon-Namen
-    if (pokemonId && pokemonId !== 0) {
-      const legendaryPokemon = await Pokemon.findOne({ id: pokemonId });
-      if (!legendaryPokemon) {
-        return res.status(404).json({ message: 'Legendäres Pokémon nicht gefunden.' });
-      }
-      pokemonName = legendaryPokemon.name_en;
-    }
-
-    const newLegendaryEncounter = {
-      pokemonId: pokemonId || 0, // 0 als ID für generische Einträge
-      pokemonName,
-      playerId: targetPlayerId,
-      encounterType
-    };
-
-    nuzlocke.legendaryEncounters.push(newLegendaryEncounter);
     await nuzlocke.save();
 
     const io = req.app.get('socketio');
-    io.to(req.params.id).emit('nuzlocke:legendary_updated', nuzlocke.legendaryEncounters);
-
-    res.status(201).json(nuzlocke.legendaryEncounters);
+    io.to(req.params.id).emit('nuzlocke:updated', { updatedEncounter: nuzlocke.encounters[encounterIndex], senderId: req.user._id.toString() });
+    res.json(nuzlocke.encounters[encounterIndex]);
   } catch (error) {
-    res.status(500).json({ message: 'Serverfehler beim Hinzufügen der legendären Begegnung.', error: error.message });
+    res.status(500).json({ message: 'Serverfehler beim Aktualisieren des Encounters.', error: error.message });
   }
 });
 
-router.delete('/:id/legendary/generic/:playerId', protect, async (req, res) => {
-  try {
-    const nuzlocke = await Nuzlocke.findById(req.params.id);
-    const { playerId } = req.params;
-
-    if (!nuzlocke) return res.status(404).json({ message: 'Nuzlocke-Run nicht gefunden.' });
-    if (!nuzlocke.participants.some(p => p._id.equals(req.user._id))) {
-      return res.status(401).json({ message: 'Nicht autorisiert.' });
-    }
-
-    // Finde den Index der letzten generischen Begegnung für den Zielspieler
-    const encounterIndex = nuzlocke.legendaryEncounters
-      .map(e => e.toObject()) // In Objekte umwandeln, um findLastIndex zu verwenden
-      .findLastIndex(enc => enc.playerId.toString() === playerId && enc.pokemonId === 0);
-
-    if (encounterIndex === -1) {
-      // Es wurde keine generische Begegnung gefunden, die man entfernen könnte
-      return res.status(404).json({ message: 'Keine generische legendäre Begegnung zum Entfernen gefunden.' });
-    }
-
-    nuzlocke.legendaryEncounters.splice(encounterIndex, 1);
-    await nuzlocke.save();
-
-    const io = req.app.get('socketio');
-    io.to(req.params.id).emit('nuzlocke:legendary_updated', nuzlocke.legendaryEncounters);
-
-    res.json(nuzlocke.legendaryEncounters);
-  } catch (error) {
-    res.status(500).json({ message: 'Serverfehler beim Entfernen der generischen Begegnung.', error: error.message });
-  }
-});
-
-const updateRules = async (req, res) => {
+// PUT /api/nuzlockes/:id/rules - Aktualisiert die Regeln
+router.put('/:id/rules', async (req, res) => {
   try {
     const { rules } = req.body;
-    const nuzlocke = await Nuzlocke.findById(req.params.id);
-    if (!nuzlocke) return res.status(404).json({ message: 'Nuzlocke-Run nicht gefunden.' });
-    const isParticipant = nuzlocke.participants.some(p => p._id.toString() === req.user._id.toString());
-    if (!isParticipant) return res.status(401).json({ message: 'Nicht autorisiert.' });
+    const nuzlocke = req.nuzlocke;
     nuzlocke.rules = rules;
-    const updatedNuzlocke = await nuzlocke.save();
+    await nuzlocke.save();
     const io = req.app.get('socketio');
-    io.to(req.params.id).emit('nuzlocke:rules_updated', { rules: updatedNuzlocke.rules, senderId: req.user._id.toString() });
-    res.json(updatedNuzlocke);
+    io.to(req.params.id).emit('nuzlocke:rules_updated', { rules: nuzlocke.rules, senderId: req.user._id.toString() });
+    res.json(nuzlocke);
   } catch (error) {
     res.status(500).json({ message: 'Serverfehler beim Aktualisieren der Regeln', error: error.message });
   }
-};
+});
 
-router.put('/:id/rules', protect, updateRules);
-
-router.delete('/:id', protect, async (req, res) => {
+// DELETE /api/nuzlockes/:id - Löscht einen Run
+router.delete('/:id', async (req, res) => {
   try {
-    const nuzlocke = await Nuzlocke.findById(req.params.id);
-    if (!nuzlocke) return res.status(404).json({ message: 'Nuzlocke-Run nicht gefunden.' });
-    const isParticipant = nuzlocke.participants.some(p => p._id.toString() === req.user._id.toString());
-    if (!isParticipant) return res.status(401).json({ message: 'Nicht autorisiert.' });
     await Nuzlocke.findByIdAndDelete(req.params.id);
     res.json({ message: 'Nuzlocke-Run erfolgreich gelöscht.' });
   } catch (error) {
@@ -273,12 +239,10 @@ router.delete('/:id', protect, async (req, res) => {
   }
 });
 
-router.put('/:id/archive', protect, async (req, res) => {
+// PUT /api/nuzlockes/:id/archive - Archiviert/de-archiviert einen Run
+router.put('/:id/archive', async (req, res) => {
   try {
-    const nuzlocke = await Nuzlocke.findById(req.params.id);
-    if (!nuzlocke) return res.status(404).json({ message: 'Nuzlocke-Run nicht gefunden.' });
-    const isParticipant = nuzlocke.participants.some(p => p._id.toString() === req.user._id.toString());
-    if (!isParticipant) return res.status(401).json({ message: 'Nicht autorisiert.' });
+    const nuzlocke = req.nuzlocke;
     nuzlocke.isArchived = !nuzlocke.isArchived;
     const updatedNuzlocke = await nuzlocke.save();
     res.json(updatedNuzlocke);
@@ -287,62 +251,110 @@ router.put('/:id/archive', protect, async (req, res) => {
   }
 });
 
-router.put('/:id/reorder', protect, async (req, res) => {
+// PUT /api/nuzlockes/:id/reorder - Sortiert die Encounter neu
+router.put('/:id/reorder', async (req, res) => {
   try {
     const { reorderedEncounters } = req.body;
     if (!reorderedEncounters || !Array.isArray(reorderedEncounters)) {
       return res.status(400).json({ message: 'Ungültige Daten für die Neusortierung.' });
     }
-
-    const nuzlocke = await Nuzlocke.findById(req.params.id);
-    if (!nuzlocke) {
-      return res.status(404).json({ message: 'Nuzlocke-Run nicht gefunden.' });
-    }
-
-    const isParticipant = nuzlocke.participants.some(p => p._id.toString() === req.user._id.toString());
-    if (!isParticipant) {
-      return res.status(401).json({ message: 'Nicht autorisiert.' });
-    }
-
+    const nuzlocke = req.nuzlocke;
     const newOrderMap = new Map(reorderedEncounters.map(enc => [enc._id, enc.sequence]));
     nuzlocke.encounters.forEach(dbEncounter => {
       if (newOrderMap.has(dbEncounter._id.toString())) {
         dbEncounter.sequence = newOrderMap.get(dbEncounter._id.toString());
       }
     });
-
     const savedNuzlocke = await nuzlocke.save();
-
-    // NEU: Sende ein Update an alle anderen im Raum
     const io = req.app.get('socketio');
     io.to(req.params.id).emit('nuzlocke:reordered', {
-      // Wir senden die komplette, neu sortierte Liste
       encounters: savedNuzlocke.encounters.sort((a, b) => (a.sequence || 999) - (b.sequence || 999)),
       senderId: req.user._id.toString()
     });
-
     res.json({ message: 'Reihenfolge erfolgreich aktualisiert.' });
-
   } catch (error) {
-    console.error("Fehler bei der Neusortierung:", error);
-    res.status(500).json({ message: 'Serverfehler bei der Neusortierung der Begegnungen.', error: error.message });
+    res.status(500).json({ message: 'Serverfehler bei der Neusortierung.', error: error.message });
   }
 });
 
-router.put('/:id/team', protect, async (req, res) => {
+// PUT /api/nuzlockes/:id/team - Speichert das Team
+router.put('/:id/team', async (req, res) => {
   try {
     const { teamEncounterIds } = req.body;
     if (!Array.isArray(teamEncounterIds)) return res.status(400).json({ message: 'Ungültige Team-Daten.' });
-    const nuzlocke = await Nuzlocke.findById(req.params.id);
-    if (!nuzlocke) return res.status(404).json({ message: 'Nuzlocke-Run nicht gefunden.' });
-    const isParticipant = nuzlocke.participants.some(p => p._id.toString() === req.user._id.toString());
-    if (!isParticipant) return res.status(401).json({ message: 'Nicht autorisiert.' });
+    const nuzlocke = req.nuzlocke;
     nuzlocke.team = teamEncounterIds;
     await nuzlocke.save();
     res.json({ message: 'Team erfolgreich gespeichert.', team: nuzlocke.team });
   } catch (error) {
-    console.error("Fehler beim Speichern des Teams:", error);
     res.status(500).json({ message: 'Serverfehler beim Speichern des Teams.' });
+  }
+});
+
+// POST /api/nuzlockes/:id/legendary - Fügt legendäre Begegnung hinzu
+router.post('/:id/legendary', async (req, res) => {
+  try {
+    const { pokemonId, encounterType, playerId } = req.body;
+    const nuzlocke = req.nuzlocke;
+    const targetPlayerId = playerId || req.user._id;
+
+    let pokemonName = 'Generic';
+    if (pokemonId && pokemonId !== 0) {
+      const legendaryPokemon = await Pokemon.findOne({ id: pokemonId });
+      if (!legendaryPokemon) return res.status(404).json({ message: 'Pokémon nicht gefunden.' });
+      pokemonName = legendaryPokemon.name_en;
+    }
+
+    nuzlocke.legendaryEncounters.push({
+      pokemonId: pokemonId || 0,
+      pokemonName,
+      playerId: targetPlayerId,
+      encounterType
+    });
+    await nuzlocke.save();
+
+    const io = req.app.get('socketio');
+    io.to(req.params.id).emit('nuzlocke:legendary_updated', nuzlocke.legendaryEncounters);
+    res.status(201).json(nuzlocke.legendaryEncounters);
+  } catch (error) {
+    res.status(500).json({ message: 'Fehler beim Hinzufügen der legendären Begegnung.', error: error.message });
+  }
+});
+
+// DELETE /api/nuzlockes/:id/legendary/:legendaryId - Entfernt spezifische legendäre Begegnung
+router.delete('/:id/legendary/:legendaryEncounterId', async (req, res) => {
+  try {
+    const nuzlocke = req.nuzlocke;
+    const encounterIndex = nuzlocke.legendaryEncounters.findIndex(enc => enc._id.toString() === req.params.legendaryEncounterId);
+    if (encounterIndex === -1) return res.status(404).json({ message: 'Begegnung nicht gefunden.' });
+
+    nuzlocke.legendaryEncounters.splice(encounterIndex, 1);
+    await nuzlocke.save();
+
+    const io = req.app.get('socketio');
+    io.to(req.params.id).emit('nuzlocke:legendary_updated', nuzlocke.legendaryEncounters);
+    res.json(nuzlocke.legendaryEncounters);
+  } catch (error) {
+    res.status(500).json({ message: 'Fehler beim Löschen der legendären Begegnung.', error: error.message });
+  }
+});
+
+// DELETE /api/nuzlockes/:id/legendary/generic/:playerId - Entfernt generische legendäre Begegnung
+router.delete('/:id/legendary/generic/:playerId', async (req, res) => {
+  try {
+    const nuzlocke = req.nuzlocke;
+    const { playerId } = req.params;
+    const encounterIndex = nuzlocke.legendaryEncounters.map(e => e.toObject()).findLastIndex(enc => enc.playerId.toString() === playerId && enc.pokemonId === 0);
+    if (encounterIndex === -1) return res.status(404).json({ message: 'Keine generische Begegnung gefunden.' });
+
+    nuzlocke.legendaryEncounters.splice(encounterIndex, 1);
+    await nuzlocke.save();
+
+    const io = req.app.get('socketio');
+    io.to(req.params.id).emit('nuzlocke:legendary_updated', nuzlocke.legendaryEncounters);
+    res.json(nuzlocke.legendaryEncounters);
+  } catch (error) {
+    res.status(500).json({ message: 'Fehler beim Löschen der generischen Begegnung.', error: error.message });
   }
 });
 

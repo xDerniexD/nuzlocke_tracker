@@ -41,11 +41,18 @@ const nuzlockeSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
+  // NEU: Ein Array für Benutzer mit Bearbeitungsrechten
+  editors: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   runName: { type: String, required: true, trim: true },
   game: { type: String, required: true },
   type: { type: String, required: true, enum: ['solo', 'soullink'], default: 'solo' },
   isArchived: { type: Boolean, default: false },
-  inviteCode: { type: String, unique: true, sparse: true },
+  inviteCode: { type: String, unique: true, sparse: true }, // Für Soullink-Partner
+  // NEU: Ein separater Einladungscode für Editoren
+  editorInviteCode: { type: String, unique: true, sparse: true },
   spectatorId: { type: String, unique: true, sparse: true },
   rules: {
     dupesClause: { type: Boolean, default: true },
@@ -54,8 +61,7 @@ const nuzlockeSchema = new mongoose.Schema({
   },
   team: [{ type: mongoose.Schema.Types.ObjectId }],
   encounters: [encounterSchema],
-  // NEU: Das Array für die legendären Begegnungen
-  legendaryEncounters: [legendaryEncounterSchema]
+  legendaryEncounters: [legendaryEncounterSchema] // Das behalten wir bei
 }, {
   timestamps: true
 });
