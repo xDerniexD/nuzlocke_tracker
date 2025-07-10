@@ -267,6 +267,20 @@ function TrackerPage() {
       toast({ title: "Regeln wurden von einem Partner aktualisiert.", status: "info", duration: 3000, isClosable: true, position: "top-right" });
     });
 
+    socket.on('nuzlocke:reordered', ({ encounters: reorderedEncounters, senderId }) => {
+      if (userFromStorage && userFromStorage._id === senderId) {
+        return; // Ignoriere das eigene Event
+      }
+      setRun(prevRun => ({ ...prevRun, encounters: reorderedEncounters }));
+      toast({
+        title: "Die Reihenfolge wurde von einem Partner geändert.",
+        status: "info",
+        duration: 3000,
+        isClosable: true,
+        position: "top-right"
+      });
+    });
+
     return () => {
       socket.disconnect();
     };

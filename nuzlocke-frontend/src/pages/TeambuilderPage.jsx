@@ -34,6 +34,7 @@ function TeambuilderPage() {
   const { isOpen: isShareOpen, onOpen: onShareOpen, onClose: onShareClose } = useDisclosure();
 
   const [rules, setRules] = useState({ dupesClause: true, shinyClause: true, customRules: '' });
+
   const [viewSettings, setViewSettings] = useState(() => {
     const savedSettings = localStorage.getItem(`viewSettings-${id}`);
     return savedSettings ? JSON.parse(savedSettings) : {
@@ -43,15 +44,13 @@ function TeambuilderPage() {
     };
   });
 
-  useEffect(() => {
-    localStorage.setItem(`viewSettings-${id}`, JSON.stringify(viewSettings));
-  }, [viewSettings, id]);
-
   const { onCopy, hasCopied } = useClipboard(run?.inviteCode || '');
-
   const spectatorLink = `${window.location.origin}/spectate/${run?.spectatorId}`;
   const { onCopy: onCopyLink, hasCopied: hasCopiedLink } = useClipboard(spectatorLink);
 
+  useEffect(() => {
+    localStorage.setItem(`viewSettings-${id}`, JSON.stringify(viewSettings));
+  }, [viewSettings, id]);
 
   const saveTeam = useCallback(async (newTeam) => {
     setSaveStatus('saving');
@@ -88,16 +87,24 @@ function TeambuilderPage() {
     return { available, fainted, missed };
   }, [run, i18n.language]);
 
+  // Dieser Hook setzt den initialen Zustand, wenn der Run geladen wird
   useEffect(() => {
     if (run) {
       const teamIds = new Set(run.team || []);
       const teamFromRun = categorizedEncounters.available.filter(p => teamIds.has(p.pairId));
       setTeam(teamFromRun);
-      setBox(categorizedEncounters.available.filter(p => !teamIds.has(p.pairId)));
       setFainted(categorizedEncounters.fainted);
       setMissed(categorizedEncounters.missed);
     }
-  }, [run, categorizedEncounters]);
+  }, [run]);
+
+  // KORREKTUR: Dieser Hook sorgt dafür, dass die Box immer synchron zum Team ist
+  useEffect(() => {
+    if (run) {
+      const teamIds = new Set(team.map(p => p.pairId));
+      setBox(categorizedEncounters.available.filter(p => !teamIds.has(p.pairId)));
+    }
+  }, [team, categorizedEncounters, run]);
 
 
   useEffect(() => {
@@ -115,19 +122,21 @@ function TeambuilderPage() {
     fetchRunData();
   }, [id]);
 
+  // KORREKTUR: Die Logik wurde vereinfacht und ist jetzt robuster
   const handlePairClick = (pair, sourceList) => {
     let newTeam;
     if (sourceList === 'box') {
       if (team.length < 6) {
         newTeam = [...team, pair];
       } else {
+        toast({ title: "Dein Team ist voll!", status: "warning", duration: 2000, isClosable: true });
         return;
       }
     } else {
       newTeam = team.filter(p => p.pairId !== pair.pairId);
     }
-    setTeam(newTeam);
-    saveTeam(newTeam);
+    setTeam(newTeam); // Nur das Team wird direkt geändert
+    saveTeam(newTeam); // Speichere die Änderung
   };
 
   const handleSaveRules = async () => {
