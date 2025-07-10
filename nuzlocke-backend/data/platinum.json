@@ -1286,7 +1286,12 @@
       "type": "landmark",
       "sequence": 13,
       "hasStandardEncounter": true,
-      "staticEncounters": [],
+      "staticEncounters": [
+        {
+          "pokemon": "Driftlon",
+          "level": 15
+        }
+      ],
       "giftPokemon": []
     },
     {
