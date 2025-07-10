@@ -1,5 +1,13 @@
 const mongoose = require('mongoose');
 
+// NEU: Schema für legendäre Begegnungen
+const legendaryEncounterSchema = new mongoose.Schema({
+  pokemonId: { type: Number, required: true },
+  pokemonName: { type: String, required: true },
+  playerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  encounterType: { type: String, default: null }
+}, { _id: true }); // Jede Begegnung bekommt eine eigene ID
+
 const encounterSchema = new mongoose.Schema({
   locationName_de: { type: String, required: true },
   locationName_en: { type: String, required: true },
@@ -44,9 +52,10 @@ const nuzlockeSchema = new mongoose.Schema({
     shinyClause: { type: Boolean, default: true },
     customRules: { type: String, default: '' },
   },
-  // NEU: Ein Array, das die Encounter-IDs des Teams speichert
   team: [{ type: mongoose.Schema.Types.ObjectId }],
-  encounters: [encounterSchema]
+  encounters: [encounterSchema],
+  // NEU: Das Array für die legendären Begegnungen
+  legendaryEncounters: [legendaryEncounterSchema]
 }, {
   timestamps: true
 });

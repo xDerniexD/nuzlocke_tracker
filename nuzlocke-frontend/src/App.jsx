@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { ChakraProvider, Flex, Spinner, Heading } from '@chakra-ui/react';
+import { ChakraProvider, Flex, Spinner } from '@chakra-ui/react';
 
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import RegisterPage from './pages/RegisterPage';
 import TrackerPage from './pages/TrackerPage';
 import TeambuilderPage from './pages/TeambuilderPage';
-import SpectatorPage from './pages/SpectatorPage'; // NEU
-import Navbar from './components/Navbar'; 
+import SpectatorPage from './pages/SpectatorPage';
+// NEU: Import der neuen Seite
+import LegendaryTrackerPage from './pages/LegendaryTrackerPage';
+import Navbar from './components/Navbar';
 
 import './App.css';
 
@@ -51,47 +53,38 @@ function App() {
     <div className="App">
       <ChakraProvider>
         {user && <Navbar user={user} onLogout={handleLogout} />}
-        
-        <Routes>
-          <Route 
-            path="/login" 
-            element={user ? <Navigate to="/" /> : <LoginPage onLoginSuccess={handleLoginSuccess} />} 
-          />
-          
-          <Route 
-            path="/register" 
-            element={user ? <Navigate to="/" /> : <RegisterPage />} 
-          />
 
-          {/* NEU: Route für die Zuschauer-Seite */}
-          <Route 
+        <Routes>
+          <Route
+            path="/login"
+            element={user ? <Navigate to="/" /> : <LoginPage onLoginSuccess={handleLoginSuccess} />}
+          />
+          <Route
+            path="/register"
+            element={user ? <Navigate to="/" /> : <RegisterPage />}
+          />
+          <Route
             path="/spectate/:spectatorId"
             element={<SpectatorPage />}
           />
 
-          <Route 
-            path="/nuzlocke/:id/teambuilder" 
+          {/* NEU: Route für den Legendary Tracker */}
+          <Route
+            path="/nuzlocke/:id/legendary-tracker"
+            element={user ? <LegendaryTrackerPage /> : <Navigate to="/login" />}
+          />
+
+          <Route
+            path="/nuzlocke/:id/teambuilder"
             element={user ? <TeambuilderPage /> : <Navigate to="/login" />}
           />
-
-          <Route 
-            path="/nuzlocke/:id/statistics" 
-            element={user ? <Heading p={10}>Statistik-Seite (Demnächst)</Heading> : <Navigate to="/login" />}
-          />
-
-          <Route 
-            path="/nuzlocke/:id" 
+          <Route
+            path="/nuzlocke/:id"
             element={user ? <TrackerPage /> : <Navigate to="/login" />}
           />
-
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={user ? <DashboardPage user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
-          />
-
-          <Route 
-            path="*"
-            element={<Heading as="h2" size="lg" textAlign="center" mt={20}>FEHLER 404: Seite nicht gefunden!</Heading>}
           />
         </Routes>
       </ChakraProvider>
