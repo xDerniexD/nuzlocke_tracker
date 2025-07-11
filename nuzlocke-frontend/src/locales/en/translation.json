@@ -122,7 +122,16 @@
     "delete_run_title": "Delete Run",
     "delete_run_body": "Are you sure? This action cannot be undone.",
     "cancel_button": "Cancel",
-    "delete_button": "Delete"
+    "delete_button": "Delete",
+    "join_editor_header": "Join as Editor",
+    "join_editor_placeholder": "Enter Editor Code",
+    "manage_editors_tooltip": "Manage Editors",
+    "manage_editors_header": "Manage Editors for \"{{runName}}\"",
+    "invite_editor_header": "Invite Editor",
+    "invite_editor_description": "Share this code to grant editing permissions to others.",
+    "current_editors_header": "Current Editors",
+    "no_editors": "This run has no editors yet.",
+    "remove_editor_aria": "Remove editor"
   },
   "teambuilder": {
     "title": "Teambuilder",
@@ -139,7 +148,8 @@
   "subnav": {
     "encounters": "Encounters",
     "teambuilder": "Teambuilder",
-    "statistics": "Statistics"
+    "statistics": "Statistics",
+    "legendaries": "Legendaries"
   },
   "share": {
     "share_button": "Share",
@@ -148,6 +158,19 @@
     "copy": "Copy",
     "copied": "Copied!",
     "close_button": "Close",
-    "invite_code_label": "Invite Code"
+    "invite_code_label": "Invite Code",
+    "modal_title": "Share & Invite",
+    "soullink_invite_title": "Invite Soullink Partner",
+    "soullink_invite_description": "Give this code to your partner so they can join."
+  },
+  "legendary_tracker": {
+    "title": "Legendary Tracker",
+    "simple": "Simple",
+    "expanded": "Expanded",
+    "detailed": "Detailed",
+    "add_encounter_header": "Add encounter for {{pokemonName}}",
+    "player_label": "Player:",
+    "encounter_type_label": "Encounter type (optional):",
+    "encounter_type_placeholder": "e.g. Static, Gift, Roaming"
   }
 }

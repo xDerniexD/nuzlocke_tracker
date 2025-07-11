@@ -122,7 +122,16 @@
     "delete_run_title": "Run löschen",
     "delete_run_body": "Bist du sicher? Diese Aktion kann nicht rückgängig gemacht werden.",
     "cancel_button": "Abbrechen",
-    "delete_button": "Löschen"
+    "delete_button": "Löschen",
+    "join_editor_header": "Als Editor beitreten",
+    "join_editor_placeholder": "Editor-Code eingeben",
+    "manage_editors_tooltip": "Editoren verwalten",
+    "manage_editors_header": "Editoren für \"{{runName}}\" verwalten",
+    "invite_editor_header": "Editor einladen",
+    "invite_editor_description": "Teile diesen Code, um anderen Bearbeitungsrechte zu geben.",
+    "current_editors_header": "Aktuelle Editoren",
+    "no_editors": "Dieser Run hat noch keine Editoren.",
+    "remove_editor_aria": "Editor entfernen"
   },
   "teambuilder": {
     "title": "Teamplaner",
@@ -139,7 +148,8 @@
   "subnav": {
     "encounters": "Begegnungen",
     "teambuilder": "Teamplaner",
-    "statistics": "Statistiken"
+    "statistics": "Statistiken",
+    "legendaries": "Legendäre"
   },
   "share": {
     "share_button": "Teilen",
@@ -148,6 +158,19 @@
     "copy": "Kopieren",
     "copied": "Kopiert!",
     "close_button": "Schließen",
-    "invite_code_label": "Invite Code"
+    "invite_code_label": "Invite Code",
+    "modal_title": "Teilen & Einladen",
+    "soullink_invite_title": "Soullink-Partner einladen",
+    "soullink_invite_description": "Gib diesen Code an deinen Partner, damit er beitreten kann."
+  },
+  "legendary_tracker": {
+    "title": "Legendary Tracker",
+    "simple": "Einfach",
+    "expanded": "Erweitert",
+    "detailed": "Detailliert",
+    "add_encounter_header": "Begegnung für {{pokemonName}} eintragen",
+    "player_label": "Spieler:",
+    "encounter_type_label": "Art der Begegnung (optional):",
+    "encounter_type_placeholder": "z.B. Static, Geschenk, Roaming"
   }
 }

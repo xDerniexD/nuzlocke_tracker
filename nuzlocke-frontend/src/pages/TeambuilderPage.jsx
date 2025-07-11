@@ -254,7 +254,7 @@ function TeambuilderPage() {
       <Modal isOpen={isShareOpen} onClose={onShareClose} isCentered>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Teilen & Einladen</ModalHeader>
+          <ModalHeader>{t('share.modal_title')}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={6}>
@@ -268,8 +268,8 @@ function TeambuilderPage() {
               </FormControl>
               {run?.type === 'soullink' && run.inviteCode && (
                 <FormControl>
-                  <FormLabel>Soullink-Partner einladen</FormLabel>
-                  <Text fontSize="sm" color="gray.500" mb={2}>Gib diesen Code an deinen Partner, damit er beitreten kann.</Text>
+                  <FormLabel>{t('share.soullink_invite_title')}</FormLabel>
+                  <Text fontSize="sm" color="gray.500" mb={2}>{t('share.soullink_invite_description')}</Text>
                   <Flex>
                     <Input value={run.inviteCode} isReadOnly />
                     <Button onClick={onCopyInvite} ml={2}>{hasCopiedInvite ? t('share.copied') : t('share.copy')}</Button>

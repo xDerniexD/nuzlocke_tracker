@@ -12,7 +12,7 @@ import {
   ModalHeader, ModalCloseButton, ModalBody, ModalFooter, useClipboard, InputGroup, InputRightElement,
 } from '@chakra-ui/react';
 import { MdPlayArrow, MdDelete, MdArchive, MdUnarchive, MdPeople, MdShare } from 'react-icons/md';
-import { FaUserPlus, FaUserTimes } from 'react-icons/fa'; // Icons für Editoren
+import { FaUserPlus, FaUserTimes } from 'react-icons/fa';
 
 function DashboardPage({ user, onLogout }) {
   const { t } = useTranslation();
@@ -58,7 +58,6 @@ function DashboardPage({ user, onLogout }) {
       }
     } catch (err) {
       setError(t('dashboard.error_loading'));
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -116,7 +115,7 @@ function DashboardPage({ user, onLogout }) {
       const res = await api.post('/nuzlockes/join-editor', { editorInviteCode: editorInviteCodeInput.trim() });
       toast({ title: "Erfolgreich beigetreten!", description: `Du kannst diesen Run jetzt bearbeiten.`, status: "success", duration: 5000, isClosable: true });
       setEditorInviteCodeInput('');
-      fetchNuzlockes(); // Lade die Runs neu, um den neuen Run anzuzeigen
+      fetchNuzlockes();
     } catch (err) {
       toast({ title: "Beitritt als Editor fehlgeschlagen", description: err.response?.data?.message, status: "error", isClosable: true });
     } finally {
@@ -145,13 +144,7 @@ function DashboardPage({ user, onLogout }) {
   const handleRemoveEditor = async (runId, editorId) => {
     try {
       const response = await api.delete(`/nuzlockes/${runId}/editor/${editorId}`);
-      // Update den State, um die UI zu aktualisieren
-      setRuns(prevRuns => prevRuns.map(run => {
-        if (run._id === runId) {
-          return { ...run, editors: response.data };
-        }
-        return run;
-      }));
+      setRuns(prevRuns => prevRuns.map(run => run._id === runId ? { ...run, editors: response.data } : run));
       setRunToManageEditors(prev => ({ ...prev, editors: response.data }));
       toast({ title: "Editor entfernt", status: "success", duration: 3000, isClosable: true });
     } catch (err) {
@@ -169,7 +162,7 @@ function DashboardPage({ user, onLogout }) {
     try {
       await api.delete(`/nuzlockes/${runToDelete}`);
       setRuns(runs.filter(run => run._id !== runToDelete));
-      toast({ title: "Run gelöscht.", status: "info", duration: 3000, isClosable: true });
+      toast({ title: t('dashboard.delete_run_title'), status: "info", duration: 3000, isClosable: true });
     } catch (err) {
       toast({ title: "Fehler beim Löschen.", status: "error", duration: 3000, isClosable: true });
     } finally {
@@ -190,12 +183,7 @@ function DashboardPage({ user, onLogout }) {
   };
 
   if (loading) {
-    return (
-      <Flex justify="center" align="center" height="200px">
-        <Spinner size="xl" />
-        <Text ml={4}>{t('dashboard.loading_runs')}</Text>
-      </Flex>
-    );
+    return (<Flex justify="center" align="center" height="200px"><Spinner size="xl" /><Text ml={4}>{t('dashboard.loading_runs')}</Text></Flex>);
   }
 
   const activeRuns = runs.filter(run => !run.isArchived);
@@ -218,9 +206,7 @@ function DashboardPage({ user, onLogout }) {
             <form onSubmit={handleCreateRun}>
               <VStack spacing={4}>
                 <Input placeholder={t('dashboard.run_name_placeholder')} value={newRunName} onChange={(e) => setNewRunName(e.target.value)} />
-                <Select value={selectedGame} onChange={(e) => setSelectedGame(e.target.value)}>
-                  <option value="platinum">{t('dashboard.game_platinum')}</option>
-                </Select>
+                <Select value={selectedGame} onChange={(e) => setSelectedGame(e.target.value)}><option value="platinum">{t('dashboard.game_platinum')}</option></Select>
                 <RadioGroup onChange={setRunType} value={runType}><HStack><Radio value="solo">{t('dashboard.run_type_solo')}</Radio><Radio value="soullink">{t('dashboard.run_type_soullink')}</Radio></HStack></RadioGroup>
                 <Button type="submit" colorScheme="teal" width="100%" isLoading={isCreating}>{t('dashboard.start_button')}</Button>
               </VStack>
@@ -236,11 +222,11 @@ function DashboardPage({ user, onLogout }) {
             </form>
           </Box>
           <Box p={6} borderWidth={1} borderRadius="lg">
-            <Heading as="h2" size="md" mb={4}>Als Editor beitreten</Heading>
+            <Heading as="h2" size="md" mb={4}>{t('dashboard.join_editor_header')}</Heading>
             <form onSubmit={handleJoinAsEditor}>
               <VStack spacing={4}>
-                <Input placeholder="Editor-Code eingeben" value={editorInviteCodeInput} onChange={(e) => setEditorInviteCodeInput(e.target.value)} />
-                <Button type="submit" colorScheme="orange" width="100%" isLoading={isJoiningAsEditor}>Beitreten</Button>
+                <Input placeholder={t('dashboard.join_editor_placeholder')} value={editorInviteCodeInput} onChange={(e) => setEditorInviteCodeInput(e.target.value)} />
+                <Button type="submit" colorScheme="orange" width="100%" isLoading={isJoiningAsEditor}>{t('dashboard.join_button')}</Button>
               </VStack>
             </form>
           </Box>
@@ -276,8 +262,8 @@ function DashboardPage({ user, onLogout }) {
                   </Link>
                   {isParticipantOf(run) && (
                     <HStack>
-                      {run.type === 'soullink' && run.inviteCode && (<Tooltip label="Partner einladen"><IconButton aria-label="Partner einladen" icon={<MdShare />} variant="ghost" colorScheme="purple" onClick={() => handleInviteClick(run)} /></Tooltip>)}
-                      <Tooltip label="Editoren verwalten"><IconButton aria-label="Editoren verwalten" icon={<FaUserPlus />} variant="ghost" colorScheme="orange" onClick={() => handleOpenEditorModal(run)} /></Tooltip>
+                      {run.type === 'soullink' && run.inviteCode && (<Tooltip label={t('share.soullink_invite_title')}><IconButton aria-label="Partner einladen" icon={<MdShare />} variant="ghost" colorScheme="purple" onClick={() => handleInviteClick(run)} /></Tooltip>)}
+                      <Tooltip label={t('dashboard.manage_editors_tooltip')}><IconButton aria-label="Editoren verwalten" icon={<FaUserPlus />} variant="ghost" colorScheme="orange" onClick={() => handleOpenEditorModal(run)} /></Tooltip>
                       <Tooltip label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')}><IconButton aria-label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')} icon={run.isArchived ? <MdUnarchive /> : <MdArchive />} variant="ghost" onClick={() => handleToggleArchive(run._id)} /></Tooltip>
                       <Tooltip label={t('dashboard.delete_run_aria')}><IconButton aria-label={t('dashboard.delete_run_aria')} icon={<MdDelete />} colorScheme="red" variant="ghost" onClick={() => handleDeleteClick(run._id)} /></Tooltip>
                     </HStack>
@@ -291,41 +277,41 @@ function DashboardPage({ user, onLogout }) {
 
       <Modal isOpen={isEditorInviteOpen} onClose={onEditorInviteClose}>
         <ModalOverlay /><ModalContent>
-          <ModalHeader>Editoren für "{runToManageEditors?.runName}" verwalten</ModalHeader><ModalCloseButton />
+          <ModalHeader>{t('dashboard.manage_editors_header', { runName: runToManageEditors?.runName })}</ModalHeader><ModalCloseButton />
           <ModalBody>
-            <Heading size="sm" mb={2}>Editor einladen</Heading>
-            <Text mb={2} fontSize="sm">Teile diesen Code, um anderen Bearbeitungsrechte zu geben.</Text>
+            <Heading size="sm" mb={2}>{t('dashboard.invite_editor_header')}</Heading>
+            <Text mb={2} fontSize="sm">{t('dashboard.invite_editor_description')}</Text>
             <InputGroup mb={6}>
               <Input value={generatedEditorCode} isReadOnly />
-              <InputRightElement width="4.5rem"><Button h="1.75rem" size="sm" onClick={onCopyEditorCode}>{hasCopiedEditorCode ? 'Kopiert' : 'Kopieren'}</Button></InputRightElement>
+              <InputRightElement width="4.5rem"><Button h="1.75rem" size="sm" onClick={onCopyEditorCode}>{hasCopiedEditorCode ? t('share.copied') : t('share.copy')}</Button></InputRightElement>
             </InputGroup>
-            <Heading size="sm" mb={3}>Aktuelle Editoren</Heading>
+            <Heading size="sm" mb={3}>{t('dashboard.current_editors_header')}</Heading>
             {runToManageEditors?.editors?.length > 0 ? (
               <VStack align="stretch">
                 {runToManageEditors.editors.map(editor => (
                   <Flex key={editor._id} justify="space-between" align="center" p={2} bg="gray.100" _dark={{ bg: "gray.700" }} borderRadius="md">
                     <Text>{editor.username}</Text>
-                    <IconButton icon={<FaUserTimes />} size="sm" colorScheme="red" variant="ghost" aria-label="Editor entfernen" onClick={() => handleRemoveEditor(runToManageEditors._id, editor._id)} />
+                    <IconButton icon={<FaUserTimes />} size="sm" colorScheme="red" variant="ghost" aria-label={t('dashboard.remove_editor_aria')} onClick={() => handleRemoveEditor(runToManageEditors._id, editor._id)} />
                   </Flex>
                 ))}
               </VStack>
-            ) : (<Text fontSize="sm" color="gray.500">Dieser Run hat noch keine Editoren.</Text>)}
+            ) : (<Text fontSize="sm" color="gray.500">{t('dashboard.no_editors')}</Text>)}
           </ModalBody>
-          <ModalFooter><Button colorScheme="blue" onClick={onEditorInviteClose}>Schließen</Button></ModalFooter>
+          <ModalFooter><Button colorScheme="blue" onClick={onEditorInviteClose}>{t('share.close_button')}</Button></ModalFooter>
         </ModalContent>
       </Modal>
 
       <Modal isOpen={isInviteOpen} onClose={onInviteClose} isCentered>
         <ModalOverlay /><ModalContent>
-          <ModalHeader>Partner einladen</ModalHeader><ModalCloseButton />
+          <ModalHeader>{t('share.soullink_invite_title')}</ModalHeader><ModalCloseButton />
           <ModalBody>
-            <Text mb={2}>Gib diesen Code an deinen Soullink-Partner, damit er oder sie beitreten kann:</Text>
+            <Text mb={2}>{t('share.soullink_invite_description')}</Text>
             <Flex>
               <Input value={runToInvite?.inviteCode || ''} isReadOnly fontSize="lg" fontWeight="bold" textAlign="center" />
-              <Button onClick={onCopy} ml={2}>{hasCopied ? 'Kopiert!' : 'Kopieren'}</Button>
+              <Button onClick={onCopy} ml={2}>{hasCopied ? t('share.copied') : t('share.copy')}</Button>
             </Flex>
           </ModalBody>
-          <ModalFooter><Button colorScheme="blue" onClick={onInviteClose}>Schließen</Button></ModalFooter>
+          <ModalFooter><Button colorScheme="blue" onClick={onInviteClose}>{t('share.close_button')}</Button></ModalFooter>
         </ModalContent>
       </Modal>
 

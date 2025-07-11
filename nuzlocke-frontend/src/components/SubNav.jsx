@@ -21,9 +21,8 @@ function SubNav() {
         <NavLink to={`/nuzlocke/${id}/teambuilder`} style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}>
           <Button borderRadius={0}>{t('subnav.teambuilder')}</Button>
         </NavLink>
-        {/* NEU: Button für den Legendary Tracker */}
         <NavLink to={`/nuzlocke/${id}/legendary-tracker`} style={({ isActive }) => (isActive ? activeLinkStyle : undefined)}>
-          <Button borderRadius={0}>Legendaries</Button>
+          <Button borderRadius={0}>{t('subnav.legendaries')}</Button>
         </NavLink>
         <Tooltip label="Demnächst verfügbar" hasArrow>
           <Button borderLeftRadius={0} isDisabled>
