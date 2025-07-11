@@ -105,10 +105,45 @@ router.get('/', protect, async (req, res) => {
         { participants: req.user._id },
         { editors: req.user._id }
       ]
-    });
+    })
+
+      .populate('participants', 'username')
+      .populate('editors', 'username');
+
     res.json(nuzlockes);
   } catch (error) {
     res.status(500).json({ message: 'Serverfehler beim Abrufen der Nuzlockes', error: error.message });
+  }
+});
+
+// NEU: DELETE /api/nuzlockes/:id/editor/:editorId - Entfernt einen Editor aus einem Run
+router.delete('/:id/editor/:editorId', protect, async (req, res) => {
+  try {
+    const { id, editorId } = req.params;
+    const nuzlocke = await Nuzlocke.findById(id);
+
+    if (!nuzlocke) {
+      return res.status(404).json({ message: 'Run nicht gefunden.' });
+    }
+
+    // Sicherheitsprüfung: Nur Teilnehmer (Besitzer) dürfen Editoren entfernen
+    if (!nuzlocke.participants.some(p => p.equals(req.user._id))) {
+      return res.status(403).json({ message: 'Nur Teilnehmer können Editoren entfernen.' });
+    }
+
+    // Entferne den Editor aus dem Array
+    nuzlocke.editors.pull(editorId);
+    await nuzlocke.save();
+
+    // Lade die aktualisierten Editoren-Daten, um sie zurückzusenden
+    const updatedNuzlocke = await Nuzlocke.findById(id).populate('editors', 'username');
+
+    // Optional: Informiere andere Clients über das Update (nicht zwingend notwendig für diese Aktion)
+
+    res.json(updatedNuzlocke.editors);
+
+  } catch (error) {
+    res.status(500).json({ message: 'Fehler beim Entfernen des Editors.', error: error.message });
   }
 });
 

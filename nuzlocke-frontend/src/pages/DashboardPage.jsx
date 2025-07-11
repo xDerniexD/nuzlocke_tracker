@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api/api';
@@ -12,7 +12,7 @@ import {
   ModalHeader, ModalCloseButton, ModalBody, ModalFooter, useClipboard, InputGroup, InputRightElement,
 } from '@chakra-ui/react';
 import { MdPlayArrow, MdDelete, MdArchive, MdUnarchive, MdPeople, MdShare } from 'react-icons/md';
-import { FaUserPlus } from 'react-icons/fa'; // Icon für Editoren
+import { FaUserPlus, FaUserTimes } from 'react-icons/fa'; // Icons für Editoren
 
 function DashboardPage({ user, onLogout }) {
   const { t } = useTranslation();
@@ -38,7 +38,7 @@ function DashboardPage({ user, onLogout }) {
   const { isOpen: isEditorInviteOpen, onOpen: onEditorInviteOpen, onClose: onEditorInviteClose } = useDisclosure();
 
   const [runToInvite, setRunToInvite] = useState(null);
-  const [runToInviteEditor, setRunToInviteEditor] = useState(null);
+  const [runToManageEditors, setRunToManageEditors] = useState(null);
   const [generatedEditorCode, setGeneratedEditorCode] = useState('');
   const { onCopy, setValue, hasCopied } = useClipboard("");
   const { onCopy: onCopyEditorCode, hasCopied: hasCopiedEditorCode } = useClipboard(generatedEditorCode);
@@ -46,27 +46,29 @@ function DashboardPage({ user, onLogout }) {
   const [runToDelete, setRunToDelete] = useState(null);
   const cancelRef = useRef();
 
-  useEffect(() => {
-    const fetchNuzlockes = async () => {
-      try {
-        setError('');
-        const response = await api.get('/nuzlockes');
-        if (Array.isArray(response.data)) {
-          setRuns(response.data);
-        } else {
-          setRuns([]);
-        }
-      } catch (err) {
-        setError(t('dashboard.error_loading'));
-        console.error(err);
-      } finally {
-        setLoading(false);
+  const fetchNuzlockes = useCallback(async () => {
+    try {
+      setError('');
+      setLoading(true);
+      const response = await api.get('/nuzlockes');
+      if (Array.isArray(response.data)) {
+        setRuns(response.data);
+      } else {
+        setRuns([]);
       }
-    };
+    } catch (err) {
+      setError(t('dashboard.error_loading'));
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
     if (user) {
       fetchNuzlockes();
     }
-  }, [user, t]);
+  }, [user, fetchNuzlockes]);
 
   const handleCreateRun = async (event) => {
     event.preventDefault();
@@ -97,9 +99,7 @@ function DashboardPage({ user, onLogout }) {
       const response = await api.post('/nuzlockes/join', { inviteCode: inviteCodeInput.trim() });
       const joinedRun = response.data;
       toast({ title: "Erfolgreich beigetreten!", description: `Du bist jetzt Teil von "${joinedRun.runName}".`, status: "success", duration: 5000, isClosable: true });
-      if (joinedRun && joinedRun._id) {
-        setRuns(prevRuns => [...prevRuns, joinedRun]);
-      }
+      setRuns(prevRuns => [...prevRuns, joinedRun]);
       setInviteCodeInput('');
     } catch (err) {
       toast({ title: "Beitritt fehlgeschlagen", description: err.response?.data?.message || t('dashboard.join_error'), status: "error", duration: 5000, isClosable: true });
@@ -116,7 +116,7 @@ function DashboardPage({ user, onLogout }) {
       const res = await api.post('/nuzlockes/join-editor', { editorInviteCode: editorInviteCodeInput.trim() });
       toast({ title: "Erfolgreich beigetreten!", description: `Du kannst diesen Run jetzt bearbeiten.`, status: "success", duration: 5000, isClosable: true });
       setEditorInviteCodeInput('');
-      navigate(`/nuzlocke/${res.data.runId}`);
+      fetchNuzlockes(); // Lade die Runs neu, um den neuen Run anzuzeigen
     } catch (err) {
       toast({ title: "Beitritt als Editor fehlgeschlagen", description: err.response?.data?.message, status: "error", isClosable: true });
     } finally {
@@ -130,8 +130,8 @@ function DashboardPage({ user, onLogout }) {
     onInviteOpen();
   };
 
-  const handleOpenEditorInvite = async (run) => {
-    setRunToInviteEditor(run);
+  const handleOpenEditorModal = async (run) => {
+    setRunToManageEditors(run);
     setGeneratedEditorCode('... generiere');
     onEditorInviteOpen();
     try {
@@ -139,6 +139,23 @@ function DashboardPage({ user, onLogout }) {
       setGeneratedEditorCode(res.data.editorInviteCode);
     } catch (err) {
       setGeneratedEditorCode('Fehler beim Generieren des Codes.');
+    }
+  };
+
+  const handleRemoveEditor = async (runId, editorId) => {
+    try {
+      const response = await api.delete(`/nuzlockes/${runId}/editor/${editorId}`);
+      // Update den State, um die UI zu aktualisieren
+      setRuns(prevRuns => prevRuns.map(run => {
+        if (run._id === runId) {
+          return { ...run, editors: response.data };
+        }
+        return run;
+      }));
+      setRunToManageEditors(prev => ({ ...prev, editors: response.data }));
+      toast({ title: "Editor entfernt", status: "success", duration: 3000, isClosable: true });
+    } catch (err) {
+      toast({ title: "Fehler beim Entfernen", description: err.response?.data?.message, status: "error", isClosable: true });
     }
   };
 
@@ -166,12 +183,7 @@ function DashboardPage({ user, onLogout }) {
       const response = await api.put(`/nuzlockes/${runId}/archive`);
       const updatedRun = response.data;
       setRuns(runs.map(r => r._id === runId ? updatedRun : r));
-      toast({
-        title: `Run wurde ${updatedRun.isArchived ? 'archiviert' : 'wiederhergestellt'}.`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
+      toast({ title: `Run wurde ${updatedRun.isArchived ? 'archiviert' : 'wiederhergestellt'}.`, status: 'success', duration: 3000, isClosable: true });
     } catch (err) {
       toast({ title: "Fehler beim Archivieren.", status: "error", duration: 3000, isClosable: true });
     }
@@ -190,6 +202,8 @@ function DashboardPage({ user, onLogout }) {
   const archivedRuns = runs.filter(run => run.isArchived);
   const runsToDisplay = showArchived ? archivedRuns : activeRuns;
 
+  const isParticipantOf = (run) => run.participants.some(p => p._id === user._id);
+
   return (
     <>
       <Box maxW="container.lg" mx="auto" p={5}>
@@ -207,9 +221,7 @@ function DashboardPage({ user, onLogout }) {
                 <Select value={selectedGame} onChange={(e) => setSelectedGame(e.target.value)}>
                   <option value="platinum">{t('dashboard.game_platinum')}</option>
                 </Select>
-                <RadioGroup onChange={setRunType} value={runType}>
-                  <HStack><Radio value="solo">{t('dashboard.run_type_solo')}</Radio><Radio value="soullink">{t('dashboard.run_type_soullink')}</Radio></HStack>
-                </RadioGroup>
+                <RadioGroup onChange={setRunType} value={runType}><HStack><Radio value="solo">{t('dashboard.run_type_solo')}</Radio><Radio value="soullink">{t('dashboard.run_type_soullink')}</Radio></HStack></RadioGroup>
                 <Button type="submit" colorScheme="teal" width="100%" isLoading={isCreating}>{t('dashboard.start_button')}</Button>
               </VStack>
             </form>
@@ -238,9 +250,7 @@ function DashboardPage({ user, onLogout }) {
 
         <Box as="section">
           <Flex justifyContent="space-between" alignItems="center" mb={4}>
-            <Heading as="h2" size="md">
-              {showArchived ? t('dashboard.archived_runs_header') : t('dashboard.your_runs_header')}
-            </Heading>
+            <Heading as="h2" size="md">{showArchived ? t('dashboard.archived_runs_header') : t('dashboard.your_runs_header')}</Heading>
             <FormControl display="flex" alignItems="center" width="auto">
               <FormLabel htmlFor="show-archive" mb="0" mr={2}>{t('dashboard.show_archived_label')}</FormLabel>
               <Switch id="show-archive" isChecked={showArchived} onChange={() => setShowArchived(!showArchived)} />
@@ -264,14 +274,14 @@ function DashboardPage({ user, onLogout }) {
                       </Box>
                     </Flex>
                   </Link>
-                  <HStack>
-                    {run.type === 'soullink' && run.inviteCode && (
-                      <Tooltip label="Partner einladen"><IconButton aria-label="Partner einladen" icon={<MdShare />} variant="ghost" colorScheme="purple" onClick={() => handleInviteClick(run)} /></Tooltip>
-                    )}
-                    <Tooltip label="Editoren einladen"><IconButton aria-label="Editoren einladen" icon={<FaUserPlus />} variant="ghost" colorScheme="orange" onClick={() => handleOpenEditorInvite(run)} /></Tooltip>
-                    <Tooltip label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')}><IconButton aria-label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')} icon={run.isArchived ? <MdUnarchive /> : <MdArchive />} variant="ghost" onClick={() => handleToggleArchive(run._id)} /></Tooltip>
-                    <Tooltip label={t('dashboard.delete_run_aria')}><IconButton aria-label={t('dashboard.delete_run_aria')} icon={<MdDelete />} colorScheme="red" variant="ghost" onClick={() => handleDeleteClick(run._id)} /></Tooltip>
-                  </HStack>
+                  {isParticipantOf(run) && (
+                    <HStack>
+                      {run.type === 'soullink' && run.inviteCode && (<Tooltip label="Partner einladen"><IconButton aria-label="Partner einladen" icon={<MdShare />} variant="ghost" colorScheme="purple" onClick={() => handleInviteClick(run)} /></Tooltip>)}
+                      <Tooltip label="Editoren verwalten"><IconButton aria-label="Editoren verwalten" icon={<FaUserPlus />} variant="ghost" colorScheme="orange" onClick={() => handleOpenEditorModal(run)} /></Tooltip>
+                      <Tooltip label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')}><IconButton aria-label={run.isArchived ? t('dashboard.restore_run_aria') : t('dashboard.archive_run_aria')} icon={run.isArchived ? <MdUnarchive /> : <MdArchive />} variant="ghost" onClick={() => handleToggleArchive(run._id)} /></Tooltip>
+                      <Tooltip label={t('dashboard.delete_run_aria')}><IconButton aria-label={t('dashboard.delete_run_aria')} icon={<MdDelete />} colorScheme="red" variant="ghost" onClick={() => handleDeleteClick(run._id)} /></Tooltip>
+                    </HStack>
+                  )}
                 </Flex>
               ))}
             </List>
@@ -280,32 +290,34 @@ function DashboardPage({ user, onLogout }) {
       </Box>
 
       <Modal isOpen={isEditorInviteOpen} onClose={onEditorInviteClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Editor einladen für "{runToInviteEditor?.runName}"</ModalHeader>
-          <ModalCloseButton />
+        <ModalOverlay /><ModalContent>
+          <ModalHeader>Editoren für "{runToManageEditors?.runName}" verwalten</ModalHeader><ModalCloseButton />
           <ModalBody>
-            <Text mb={4}>Teile diesen Code mit Personen, die deinen Run bearbeiten dürfen. Der Code ist wiederverwendbar.</Text>
-            <InputGroup>
+            <Heading size="sm" mb={2}>Editor einladen</Heading>
+            <Text mb={2} fontSize="sm">Teile diesen Code, um anderen Bearbeitungsrechte zu geben.</Text>
+            <InputGroup mb={6}>
               <Input value={generatedEditorCode} isReadOnly />
-              <InputRightElement width="4.5rem">
-                <Button h="1.75rem" size="sm" onClick={onCopyEditorCode}>
-                  {hasCopiedEditorCode ? 'Kopiert' : 'Kopieren'}
-                </Button>
-              </InputRightElement>
+              <InputRightElement width="4.5rem"><Button h="1.75rem" size="sm" onClick={onCopyEditorCode}>{hasCopiedEditorCode ? 'Kopiert' : 'Kopieren'}</Button></InputRightElement>
             </InputGroup>
+            <Heading size="sm" mb={3}>Aktuelle Editoren</Heading>
+            {runToManageEditors?.editors?.length > 0 ? (
+              <VStack align="stretch">
+                {runToManageEditors.editors.map(editor => (
+                  <Flex key={editor._id} justify="space-between" align="center" p={2} bg="gray.100" _dark={{ bg: "gray.700" }} borderRadius="md">
+                    <Text>{editor.username}</Text>
+                    <IconButton icon={<FaUserTimes />} size="sm" colorScheme="red" variant="ghost" aria-label="Editor entfernen" onClick={() => handleRemoveEditor(runToManageEditors._id, editor._id)} />
+                  </Flex>
+                ))}
+              </VStack>
+            ) : (<Text fontSize="sm" color="gray.500">Dieser Run hat noch keine Editoren.</Text>)}
           </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="blue" onClick={onEditorInviteClose}>Schließen</Button>
-          </ModalFooter>
+          <ModalFooter><Button colorScheme="blue" onClick={onEditorInviteClose}>Schließen</Button></ModalFooter>
         </ModalContent>
       </Modal>
 
       <Modal isOpen={isInviteOpen} onClose={onInviteClose} isCentered>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Partner einladen</ModalHeader>
-          <ModalCloseButton />
+        <ModalOverlay /><ModalContent>
+          <ModalHeader>Partner einladen</ModalHeader><ModalCloseButton />
           <ModalBody>
             <Text mb={2}>Gib diesen Code an deinen Soullink-Partner, damit er oder sie beitreten kann:</Text>
             <Flex>
