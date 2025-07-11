@@ -143,7 +143,9 @@
     "missed_encounters": "Missed Encounters",
     "no_missed_encounters": "No missed encounters.",
     "empty_team_prompt": "Your team is empty. Click on a Pokémon from the box to add it.",
-    "empty_box": "Your box is empty."
+    "empty_box": "Your box is empty.",
+    "team_analysis": "Team Analysis",
+    "player_team_analysis": "Team Analysis for {{player}}"
   },
   "subnav": {
     "encounters": "Encounters",
@@ -172,5 +174,14 @@
     "player_label": "Player:",
     "encounter_type_label": "Encounter type (optional):",
     "encounter_type_placeholder": "e.g. Static, Gift, Roaming"
+  },
+  "type_efficacy": {
+    "defensive_analysis": "Defensive Type Analysis",
+    "no_weaknesses": "No special strengths or weaknesses.",
+    "x4_weak": "4x Weak",
+    "x2_weak": "2x Weak",
+    "x0_5_resist": "0.5x Resist",
+    "x0_25_resist": "0.25x Resist",
+    "x0_immune": "Immune"
   }
 }

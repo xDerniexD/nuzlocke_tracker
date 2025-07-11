@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-// ... alle anderen Imports bleiben gleich
 import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   Button, Spinner, Flex, Text, Tag, VStack, HStack, Progress, Grid, Box, Center, Image,
@@ -13,6 +12,8 @@ import AbilityDetailModal from './AbilityDetailModal';
 import PokemonSprite from '../components/PokemonSprite';
 import api from '../api/api';
 import { FaBolt, FaStar, FaSyncAlt, FaArrowRight } from 'react-icons/fa';
+import { calculatePokemonDefenses, groupWeaknesses } from '../utils/typeUtils';
+import TypeEfficacy from './TypeEfficacy';
 
 function PokemonDetailModal({ isOpen, onClose, pokemon, isLoading, game }) {
   const { i18n, t } = useTranslation();
@@ -37,6 +38,12 @@ function PokemonDetailModal({ isOpen, onClose, pokemon, isLoading, game }) {
     } else {
       setIsEvoLoading(false);
     }
+  }, [pokemon]);
+
+  const defensiveProfile = useMemo(() => {
+    if (!pokemon || !pokemon.types) return {};
+    const weaknesses = calculatePokemonDefenses(pokemon.types);
+    return groupWeaknesses(weaknesses);
   }, [pokemon]);
 
   const handleMoveClick = (move) => { setSelectedMove(move); onMoveOpen(); };
@@ -65,7 +72,6 @@ function PokemonDetailModal({ isOpen, onClose, pokemon, isLoading, game }) {
   };
 
   const groupedGameMoves = useMemo(() => {
-    // KORREKTUR: Greift auf die vom Backend aufbereitete Struktur zu
     if (!pokemon?.moves?.[game]) return {};
     const movesByMethod = pokemon.moves[game];
     const grouped = {};
@@ -124,6 +130,11 @@ function PokemonDetailModal({ isOpen, onClose, pokemon, isLoading, game }) {
                       <Box>
                         <Text fontWeight="bold" mb={2} fontSize="lg">{t('modal.abilities')}</Text>
                         <HStack>{pokemon.abilities && pokemon.abilities.map((abilitySlot, index) => { const ability = abilitySlot.ability; if (!ability) return null; return (<Tag key={ability._id || index} size="md" variant="subtle" colorScheme="purple" onClick={() => handleAbilityClick(ability)} cursor="pointer" _hover={{ opacity: 0.8 }}>{abilitySlot.is_hidden && `${t('modal.hidden_ability_tag')} `}{(i18n.language === 'de' && ability.name_de) ? ability.name_de : ability.name_en}</Tag>); })}</HStack>
+                      </Box>
+                      <Divider />
+                      <Box>
+                        <Text fontWeight="bold" mb={2} fontSize="lg">{t('type_efficacy.defensive_analysis')}</Text>
+                        <TypeEfficacy groupedEfficacy={defensiveProfile} />
                       </Box>
                     </VStack>
                     <VStack spacing={5} align="stretch">

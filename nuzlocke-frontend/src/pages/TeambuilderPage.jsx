@@ -7,13 +7,15 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter,
   ModalBody, ModalCloseButton, FormControl, FormLabel, Textarea, Checkbox,
   Menu, MenuButton, MenuList, MenuOptionGroup, MenuItemOption, useToast, Tag, IconButton,
-  useClipboard, Input
+  useClipboard, Input, SimpleGrid, Badge
 } from '@chakra-ui/react';
 import { ArrowBackIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import { FaBook, FaCog, FaCopy, FaShareAlt } from 'react-icons/fa';
 import api from '../api/api';
 import SubNav from '../components/SubNav';
 import PokemonPairCard from '../components/PokemonPairCard';
+import { calculateTeamWeaknessCounts } from '../utils/typeUtils';
+import TypeIcons from '../components/TypeIcons';
 
 function TeambuilderPage() {
   const { id } = useParams();
@@ -51,6 +53,19 @@ function TeambuilderPage() {
   useEffect(() => {
     localStorage.setItem(`viewSettings-${id}`, JSON.stringify(viewSettings));
   }, [viewSettings, id]);
+
+  const teamWeaknessProfiles = useMemo(() => {
+    if (!team || team.length === 0 || !run) return {};
+    const profiles = {};
+    const p1Team = team.map(pair => pair.p1).filter(Boolean);
+    profiles[run.participants[0]._id] = calculateTeamWeaknessCounts(p1Team);
+
+    if (run.type === 'soullink' && run.participants[1]) {
+      const p2Team = team.map(pair => pair.p2).filter(Boolean);
+      profiles[run.participants[1]._id] = calculateTeamWeaknessCounts(p2Team);
+    }
+    return profiles;
+  }, [team, run]);
 
   const saveTeam = useCallback(async (newTeam) => {
     setSaveStatus('saving');
@@ -160,6 +175,11 @@ function TeambuilderPage() {
   if (error) return <Container mt={10}><Alert status="error"><AlertIcon />{error}</Alert></Container>;
   if (!run) return null;
 
+  const multiplierToLabel = {
+    '4': t('type_efficacy.x4_weak'),
+    '2': t('type_efficacy.x2_weak'),
+  };
+
   return (
     <>
       <Container maxW="container.2xl" py={8}>
@@ -194,6 +214,39 @@ function TeambuilderPage() {
         <SubNav />
 
         <VStack spacing={8} align="stretch">
+          {team.length > 0 && (
+            <Box>
+              <Heading as="h2" size="lg" mb={4}>{t('teambuilder.team_analysis')}</Heading>
+              <SimpleGrid columns={{ base: 1, md: run.type === 'soullink' ? 2 : 1 }} spacing={5}>
+                {run.participants.map(player => (
+                  <Box key={player._id} p={4} borderWidth={1} borderRadius="lg" bg="gray.50" _dark={{ bg: 'gray.800' }}>
+                    <Heading size="md" mb={4}>{t('teambuilder.player_team_analysis', { player: player.username })}</Heading>
+                    <VStack align="stretch" spacing={4}>
+                      {['4', '2'].map(multiplier => {
+                        const types = teamWeaknessProfiles[player._id]?.[multiplier];
+                        if (!types || Object.keys(types).length === 0) return null;
+
+                        return (
+                          <Box key={multiplier}>
+                            <Tag colorScheme={multiplier === '4' ? 'red' : 'orange'} mb={2}>{multiplierToLabel[multiplier]}</Tag>
+                            <VStack align="stretch" spacing={2}>
+                              {Object.entries(types).map(([type, count]) => (
+                                <HStack key={type} justify="space-between">
+                                  <TypeIcons types={[type]} />
+                                  <Badge colorScheme="red" variant="solid" borderRadius="full" px="2">{count}x</Badge>
+                                </HStack>
+                              ))}
+                            </VStack>
+                          </Box>
+                        );
+                      })}
+                    </VStack>
+                  </Box>
+                ))}
+              </SimpleGrid>
+            </Box>
+          )}
+
           <Box>
             <Heading as="h2" size="lg" mb={4}>{t('teambuilder.your_team')} ({teamSlotsUsed} / 6)</Heading>
             <Flex wrap="wrap" gap={4} minH="160px" p={4} borderWidth={1} borderRadius="lg" bg="gray.50" _dark={{ bg: 'gray.800' }}>
