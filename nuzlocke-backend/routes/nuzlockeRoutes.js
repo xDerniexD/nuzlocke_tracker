@@ -199,6 +199,7 @@ router.post('/join-editor', protect, async (req, res) => {
     }
 
     nuzlocke.editors.push(req.user._id);
+    nuzlocke.editorInviteCode = nanoid(8);
     await nuzlocke.save();
 
     res.json({ message: 'Erfolgreich als Editor beigetreten!', runId: nuzlocke._id });
