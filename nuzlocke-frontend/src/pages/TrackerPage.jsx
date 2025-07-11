@@ -178,9 +178,9 @@ function TrackerPage() {
   const [faintContext, setFaintContext] = useState(null);
   const [selectedFaintReason, setSelectedFaintReason] = useState('');
 
-  const { onCopy, hasCopied } = useClipboard(run?.inviteCode || '');
   const spectatorLink = `${window.location.origin}/spectate/${run?.spectatorId}`;
   const { onCopy: onCopyLink, hasCopied: hasCopiedLink } = useClipboard(spectatorLink);
+  const { onCopy: onCopyInvite, hasCopied: hasCopiedInvite } = useClipboard(run?.inviteCode || '');
 
   const [sortBy, setSortBy] = useState('default');
 
@@ -330,15 +330,11 @@ function TrackerPage() {
     setDisplayedEncounters(processedEncounters);
   }, [run, sortBy, filterBy, i18n.language, viewSettings, filterOptions.length]);
 
-
   const updateEncounter = useCallback(async (encounterId, changes) => {
     const originalEncounter = run.encounters.find(e => e._id === encounterId);
     if (!originalEncounter) return;
-
     const updatedEncounter = { ...originalEncounter, ...changes };
-
     setRun(prevRun => ({ ...prevRun, encounters: prevRun.encounters.map(e => e._id === encounterId ? updatedEncounter : e) }));
-
     setSaveStatus('saving');
     try {
       await api.put(`/nuzlockes/${id}`, { updatedEncounter });
@@ -482,18 +478,9 @@ function TrackerPage() {
                 </MenuOptionGroup>
               </MenuList>
             </Menu>
-            <Tooltip label={t('share.spectator_link_title')}><Button onClick={onShareOpen} leftIcon={<Icon as={FaShareAlt} />}>{t('share.share_button')}</Button></Tooltip>
+            <Tooltip label={t('share.share_button')}><Button onClick={onShareOpen} leftIcon={<Icon as={FaShareAlt} />}>{t('share.share_button')}</Button></Tooltip>
           </HStack>
-          <VStack spacing={0}>
-            <Heading as="h1" size="lg" textAlign="center">{run.runName}</Heading>
-            {run?.type === 'soullink' && run.inviteCode && (
-              <HStack mt={2} p={1.5} pl={3} borderRadius="md" bg="gray.100" _dark={{ bg: 'gray.700' }}>
-                <Text fontSize="sm" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.300' }}>{t('share.invite_code_label')}:</Text>
-                <Tag size="lg" colorScheme="purple" fontWeight="bold">{run.inviteCode}</Tag>
-                <Tooltip label={hasCopied ? t('share.copied') : t('share.copy')} closeOnClick={false}><IconButton aria-label="Invite Code kopieren" icon={<FaCopy />} size="sm" onClick={onCopy} variant="ghost" /></Tooltip>
-              </HStack>
-            )}
-          </VStack>
+          <VStack spacing={0}><Heading as="h1" size="lg" textAlign="center">{run.runName}</Heading></VStack>
           <Box minW="220px" textAlign="right">{getSaveStatusIndicator()}</Box>
         </Flex>
         <SubNav />
@@ -505,34 +492,21 @@ function TrackerPage() {
             <Text fontWeight="bold">{player1Name}</Text><Box />
             {viewSettings.showNicknames && <Text fontWeight="bold">{t('tracker.nickname_header')}</Text>}
             <Text fontWeight="bold">{t('tracker.status_header')}</Text>
-            {isSoullink && (
-              <>
-                <Text fontWeight="bold" textAlign="center" whiteSpace="nowrap">{t('tracker.pokemon_header')}</Text>
-                <Text fontWeight="bold">{player2Name}</Text><Box />
-                {viewSettings.showNicknames && <Text fontWeight="bold">{t('tracker.nickname_header')}</Text>}
-                <Text fontWeight="bold">{t('tracker.status_header')}</Text>
-              </>
+            {isSoullink && (<><Text fontWeight="bold" textAlign="center" whiteSpace="nowrap">{t('tracker.pokemon_header')}</Text><Text fontWeight="bold">{player2Name}</Text><Box />
+              {viewSettings.showNicknames && <Text fontWeight="bold">{t('tracker.nickname_header')}</Text>}<Text fontWeight="bold">{t('tracker.status_header')}</Text></>
             )}
           </Grid>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}>
             <SortableContext items={displayedEncounters.map(enc => enc._id)} strategy={verticalListSortingStrategy}>
               {displayedEncounters.map((encounter) => (
                 <SortableEncounterRow
-                  key={encounter._id}
-                  encounter={encounter}
-                  gridTemplateColumns={gridTemplateColumns}
-                  isSoullink={isSoullink}
-                  viewSettings={viewSettings}
-                  t={t} i18n={i18n}
-                  player1Name={player1Name} player2Name={player2Name}
-                  isSortable={isSortable} rules={rules}
-                  player1CaughtChains={player1CaughtChains} player2CaughtChains={player2CaughtChains}
-                  handleClearEncounter={handleClearEncounter}
-                  handleSpriteClick={handleSpriteClick}
-                  handlePokemonSelect={handlePokemonSelect}
-                  handleEvolve={handleEvolve}
-                  updateEncounter={updateEncounter}
-                  handleStatusChangeAttempt={handleStatusChangeAttempt}
+                  key={encounter._id} encounter={encounter} gridTemplateColumns={gridTemplateColumns}
+                  isSoullink={isSoullink} viewSettings={viewSettings} t={t} i18n={i18n}
+                  player1Name={player1Name} player2Name={player2Name} isSortable={isSortable}
+                  rules={rules} player1CaughtChains={player1CaughtChains} player2CaughtChains={player2CaughtChains}
+                  handleClearEncounter={handleClearEncounter} handleSpriteClick={handleSpriteClick}
+                  handlePokemonSelect={handlePokemonSelect} handleEvolve={handleEvolve}
+                  updateEncounter={updateEncounter} handleStatusChangeAttempt={handleStatusChangeAttempt}
                 />
               ))}
             </SortableContext>
@@ -540,7 +514,37 @@ function TrackerPage() {
         </VStack>
       </Container>
 
-      {/* --- Modals --- */}
+      <Modal isOpen={isShareOpen} onClose={onShareClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Teilen & Einladen</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing={6}>
+              <FormControl>
+                <FormLabel>{t('share.spectator_link_title')}</FormLabel>
+                <Text fontSize="sm" color="gray.500" mb={2}>{t('share.spectator_link_description')}</Text>
+                <Flex>
+                  <Input value={spectatorLink} isReadOnly />
+                  <Button onClick={onCopyLink} ml={2}>{hasCopiedLink ? t('share.copied') : t('share.copy')}</Button>
+                </Flex>
+              </FormControl>
+              {run?.type === 'soullink' && run.inviteCode && (
+                <FormControl>
+                  <FormLabel>Soullink-Partner einladen</FormLabel>
+                  <Text fontSize="sm" color="gray.500" mb={2}>Gib diesen Code an deinen Partner, damit er beitreten kann.</Text>
+                  <Flex>
+                    <Input value={run.inviteCode} isReadOnly />
+                    <Button onClick={onCopyInvite} ml={2}>{hasCopiedInvite ? t('share.copied') : t('share.copy')}</Button>
+                  </Flex>
+                </FormControl>
+              )}
+            </VStack>
+          </ModalBody>
+          <ModalFooter><Button colorScheme="blue" onClick={onShareClose}>{t('share.close_button')}</Button></ModalFooter>
+        </ModalContent>
+      </Modal>
+
       <Modal isOpen={isRulesOpen} onClose={onRulesClose}>
         <ModalOverlay /><ModalContent>
           <ModalHeader>{t('rules.modal_title')}</ModalHeader><ModalCloseButton />
@@ -561,19 +565,6 @@ function TrackerPage() {
             </Select>
           </FormControl></ModalBody>
           <ModalFooter><Button variant="ghost" mr={3} onClick={onFaintModalClose}>Abbrechen</Button><Button colorScheme="red" onClick={handleConfirmFaint}>Bestätigen</Button></ModalFooter>
-        </ModalContent>
-      </Modal>
-      <Modal isOpen={isShareOpen} onClose={onShareClose} isCentered>
-        <ModalOverlay /><ModalContent>
-          <ModalHeader>{t('share.spectator_link_title')}</ModalHeader><ModalCloseButton />
-          <ModalBody>
-            <Text mb={2}>{t('share.spectator_link_description')}</Text>
-            <Flex>
-              <Input value={spectatorLink} isReadOnly />
-              <Button onClick={onCopyLink} ml={2}>{hasCopiedLink ? t('share.copied') : t('share.copy')}</Button>
-            </Flex>
-          </ModalBody>
-          <ModalFooter><Button colorScheme="blue" onClick={onShareClose}>{t('share.close_button')}</Button></ModalFooter>
         </ModalContent>
       </Modal>
       <PokemonDetailModal isOpen={isDetailOpen} onClose={onDetailClose} pokemon={selectedPokemonDetails} isLoading={isDetailLoading} game={run?.game} />

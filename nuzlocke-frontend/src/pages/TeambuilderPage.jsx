@@ -44,9 +44,9 @@ function TeambuilderPage() {
     };
   });
 
-  const { onCopy, hasCopied } = useClipboard(run?.inviteCode || '');
   const spectatorLink = `${window.location.origin}/spectate/${run?.spectatorId}`;
   const { onCopy: onCopyLink, hasCopied: hasCopiedLink } = useClipboard(spectatorLink);
+  const { onCopy: onCopyInvite, hasCopied: hasCopiedInvite } = useClipboard(run?.inviteCode || '');
 
   useEffect(() => {
     localStorage.setItem(`viewSettings-${id}`, JSON.stringify(viewSettings));
@@ -87,7 +87,6 @@ function TeambuilderPage() {
     return { available, fainted, missed };
   }, [run, i18n.language]);
 
-  // Dieser Hook setzt den initialen Zustand, wenn der Run geladen wird
   useEffect(() => {
     if (run) {
       const teamIds = new Set(run.team || []);
@@ -96,9 +95,8 @@ function TeambuilderPage() {
       setFainted(categorizedEncounters.fainted);
       setMissed(categorizedEncounters.missed);
     }
-  }, [run]);
+  }, [run, categorizedEncounters]);
 
-  // KORREKTUR: Dieser Hook sorgt dafür, dass die Box immer synchron zum Team ist
   useEffect(() => {
     if (run) {
       const teamIds = new Set(team.map(p => p.pairId));
@@ -122,7 +120,6 @@ function TeambuilderPage() {
     fetchRunData();
   }, [id]);
 
-  // KORREKTUR: Die Logik wurde vereinfacht und ist jetzt robuster
   const handlePairClick = (pair, sourceList) => {
     let newTeam;
     if (sourceList === 'box') {
@@ -135,8 +132,8 @@ function TeambuilderPage() {
     } else {
       newTeam = team.filter(p => p.pairId !== pair.pairId);
     }
-    setTeam(newTeam); // Nur das Team wird direkt geändert
-    saveTeam(newTeam); // Speichere die Änderung
+    setTeam(newTeam);
+    saveTeam(newTeam);
   };
 
   const handleSaveRules = async () => {
@@ -188,24 +185,9 @@ function TeambuilderPage() {
                 </MenuOptionGroup>
               </MenuList>
             </Menu>
-            <Tooltip label={t('share.spectator_link_title')}>
-              <Button onClick={onShareOpen} leftIcon={<Icon as={FaShareAlt} />}>
-                {t('share.share_button')}
-              </Button>
-            </Tooltip>
+            <Tooltip label={t('share.share_button')}><Button onClick={onShareOpen} leftIcon={<Icon as={FaShareAlt} />}>{t('share.share_button')}</Button></Tooltip>
           </HStack>
-
-          <VStack spacing={0}>
-            <Heading as="h1" size="lg" textAlign="center">{run?.runName}</Heading>
-            {run?.type === 'soullink' && run.inviteCode && (
-              <HStack mt={2} p={1.5} pl={3} borderRadius="md" bg="gray.100" _dark={{ bg: 'gray.700' }}>
-                <Text fontSize="sm" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.300' }}>{t('share.invite_code_label')}:</Text>
-                <Tag size="lg" colorScheme="purple" fontWeight="bold">{run.inviteCode}</Tag>
-                <Tooltip label={hasCopied ? t('share.copied') : t('share.copy')} closeOnClick={false}><IconButton aria-label="Invite Code kopieren" icon={<FaCopy />} size="sm" onClick={onCopy} variant="ghost" /></Tooltip>
-              </HStack>
-            )}
-          </VStack>
-
+          <VStack spacing={0}><Heading as="h1" size="lg" textAlign="center">{run?.runName}</Heading></VStack>
           <Box minW="220px" textAlign="right">{getSaveStatusIndicator()}</Box>
         </Flex>
 
@@ -220,9 +202,7 @@ function TeambuilderPage() {
               )) : <Text color="gray.500">{t('teambuilder.empty_team_prompt')}</Text>}
             </Flex>
           </Box>
-
           <Divider />
-
           <Box>
             <Heading as="h2" size="lg" mb={4}>{t('teambuilder.your_box')}</Heading>
             {box.length === 0 && team.length === 0 && fainted.length === 0 && missed.length === 0 ? (
@@ -237,9 +217,7 @@ function TeambuilderPage() {
               </Flex>
             )}
           </Box>
-
           <Divider />
-
           <Box>
             <Heading as="h2" size="lg" mb={4}>{t('teambuilder.fainted_pokemon')}</Heading>
             {fainted.length === 0 ? (
@@ -250,9 +228,7 @@ function TeambuilderPage() {
               </Flex>
             )}
           </Box>
-
           <Divider />
-
           <Box>
             <Heading as="h2" size="lg" mb={4}>{t('teambuilder.missed_encounters')}</Heading>
             {missed.length === 0 ? (
@@ -278,22 +254,31 @@ function TeambuilderPage() {
       <Modal isOpen={isShareOpen} onClose={onShareClose} isCentered>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>{t('share.spectator_link_title')}</ModalHeader>
+          <ModalHeader>Teilen & Einladen</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Text mb={2}>{t('share.spectator_link_description')}</Text>
-            <Flex>
-              <Input value={spectatorLink} isReadOnly />
-              <Button onClick={onCopyLink} ml={2}>
-                {hasCopiedLink ? t('share.copied') : t('share.copy')}
-              </Button>
-            </Flex>
+            <VStack spacing={6}>
+              <FormControl>
+                <FormLabel>{t('share.spectator_link_title')}</FormLabel>
+                <Text fontSize="sm" color="gray.500" mb={2}>{t('share.spectator_link_description')}</Text>
+                <Flex>
+                  <Input value={spectatorLink} isReadOnly />
+                  <Button onClick={onCopyLink} ml={2}>{hasCopiedLink ? t('share.copied') : t('share.copy')}</Button>
+                </Flex>
+              </FormControl>
+              {run?.type === 'soullink' && run.inviteCode && (
+                <FormControl>
+                  <FormLabel>Soullink-Partner einladen</FormLabel>
+                  <Text fontSize="sm" color="gray.500" mb={2}>Gib diesen Code an deinen Partner, damit er beitreten kann.</Text>
+                  <Flex>
+                    <Input value={run.inviteCode} isReadOnly />
+                    <Button onClick={onCopyInvite} ml={2}>{hasCopiedInvite ? t('share.copied') : t('share.copy')}</Button>
+                  </Flex>
+                </FormControl>
+              )}
+            </VStack>
           </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="blue" onClick={onShareClose}>
-              {t('share.close_button')}
-            </Button>
-          </ModalFooter>
+          <ModalFooter><Button colorScheme="blue" onClick={onShareClose}>{t('share.close_button')}</Button></ModalFooter>
         </ModalContent>
       </Modal>
 
