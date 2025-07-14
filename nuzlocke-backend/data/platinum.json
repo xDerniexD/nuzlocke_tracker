@@ -224,7 +224,7 @@
         "en": "Eterna Forest"
       },
       "type": "forest",
-      "sequence": 14,
+      "sequence": 17,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -376,7 +376,7 @@
         "en": "Great Marsh"
       },
       "type": "forest",
-      "sequence": 31,
+      "sequence": 34,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -402,7 +402,7 @@
         "en": "Hearthome City"
       },
       "type": "city",
-      "sequence": 21,
+      "sequence": 24,
       "hasStandardEncounter": false,
       "staticEncounters": [],
       "giftPokemon": [
@@ -492,7 +492,7 @@
         "en": "Lake Verity"
       },
       "type": "lake_front",
-      "sequence": 4,
+      "sequence": 3,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -503,7 +503,7 @@
         "en": "Lost Tower"
       },
       "type": "landmark",
-      "sequence": 23,
+      "sequence": 27,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -560,7 +560,7 @@
         "en": "Old Chateau"
       },
       "type": "landmark",
-      "sequence": 15,
+      "sequence": 20,
       "hasStandardEncounter": true,
       "staticEncounters": [
         {
@@ -586,7 +586,7 @@
         "en": "Oreburgh Gate"
       },
       "type": "cave",
-      "sequence": 7,
+      "sequence": 9,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -597,7 +597,7 @@
         "en": "Oreburgh Mine"
       },
       "type": "cave",
-      "sequence": 8,
+      "sequence": 10,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -618,7 +618,7 @@
         "en": "Pastoria City"
       },
       "type": "city",
-      "sequence": 30,
+      "sequence": 33,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -670,7 +670,7 @@
         "en": "Ravaged Path"
       },
       "type": "cave",
-      "sequence": 11,
+      "sequence": 7,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -722,7 +722,7 @@
         "en": "Route 201"
       },
       "type": "route",
-      "sequence": 3,
+      "sequence": 2,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -733,7 +733,7 @@
         "en": "Route 202"
       },
       "type": "route",
-      "sequence": 5,
+      "sequence": 4,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -744,7 +744,7 @@
         "en": "Route 203"
       },
       "type": "route",
-      "sequence": 6,
+      "sequence": 8,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -755,7 +755,7 @@
         "en": "Route 204"
       },
       "type": "route",
-      "sequence": 10,
+      "sequence": 6,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -766,7 +766,7 @@
         "en": "Route 205"
       },
       "type": "route",
-      "sequence": 12,
+      "sequence": 14,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -777,7 +777,7 @@
         "en": "Route 206"
       },
       "type": "route",
-      "sequence": 18,
+      "sequence": 21,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -788,7 +788,7 @@
         "en": "Route 207"
       },
       "type": "route",
-      "sequence": 9,
+      "sequence": 11,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -799,7 +799,7 @@
         "en": "Route 208"
       },
       "type": "route",
-      "sequence": 20,
+      "sequence": 23,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -810,7 +810,7 @@
         "en": "Route 209"
       },
       "type": "route",
-      "sequence": 22,
+      "sequence": 25,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -821,7 +821,7 @@
         "en": "Route 210"
       },
       "type": "route",
-      "sequence": 25,
+      "sequence": 28,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -832,7 +832,7 @@
         "en": "Route 211"
       },
       "type": "route",
-      "sequence": 17,
+      "sequence": 18,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -843,7 +843,7 @@
         "en": "Route 212"
       },
       "type": "route",
-      "sequence": 28,
+      "sequence": 31,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -854,7 +854,7 @@
         "en": "Route 213"
       },
       "type": "route",
-      "sequence": 32,
+      "sequence": 35,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -865,7 +865,7 @@
         "en": "Route 214"
       },
       "type": "route",
-      "sequence": 35,
+      "sequence": 38,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -876,7 +876,7 @@
         "en": "Route 215"
       },
       "type": "route",
-      "sequence": 26,
+      "sequence": 29,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -920,7 +920,7 @@
         "en": "Route 219"
       },
       "type": "route",
-      "sequence": 38,
+      "sequence": 12,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -1110,7 +1110,7 @@
         "en": "Solaceon Ruins"
       },
       "type": "landmark",
-      "sequence": 24,
+      "sequence": 26,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -1227,7 +1227,7 @@
         "en": "Trophy Garden"
       },
       "type": "etc",
-      "sequence": 29,
+      "sequence": 32,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -1249,7 +1249,7 @@
         "en": "Twinleaf Town"
       },
       "type": "city",
-      "sequence": 2,
+      "sequence": 13,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -1284,7 +1284,7 @@
         "en": "Valley Windworks"
       },
       "type": "landmark",
-      "sequence": 13,
+      "sequence": 14,
       "hasStandardEncounter": true,
       "staticEncounters": [
         {
@@ -1327,7 +1327,7 @@
         "en": "Veilstone City"
       },
       "type": "city",
-      "sequence": 27,
+      "sequence": 30,
       "hasStandardEncounter": false,
       "staticEncounters": [],
       "giftPokemon": [
@@ -1405,7 +1405,7 @@
         "en": "Wayward Cave"
       },
       "type": "cave",
-      "sequence": 18,
+      "sequence": 22,
       "hasStandardEncounter": true,
       "staticEncounters": [],
       "giftPokemon": []
@@ -1418,7 +1418,7 @@
         "en": "Oreburgh Gym"
       },
       "type": "gym",
-      "sequence": 8.1,
+      "sequence": 13.1,
       "levelCap": 14,
       "badge": {
         "de": "Kohlorden",
@@ -1432,7 +1432,7 @@
         "en": "Eterna Gym"
       },
       "type": "gym",
-      "sequence": 14.1,
+      "sequence": 19.1,
       "levelCap": 22,
       "badge": {
         "de": "Waldorden",
@@ -1446,7 +1446,7 @@
         "en": "Veilstone Gym"
       },
       "type": "gym",
-      "sequence": 26.1,
+      "sequence": 29.1,
       "levelCap": 32,
       "badge": {
         "de": "Bergorden",
@@ -1460,7 +1460,7 @@
         "en": "Pastoria Gym"
       },
       "type": "gym",
-      "sequence": 29.1,
+      "sequence": 33.1,
       "levelCap": 37,
       "badge": {
         "de": "Fennorden",
@@ -1474,7 +1474,7 @@
         "en": "Hearthome Gym"
       },
       "type": "gym",
-      "sequence": 20.1,
+      "sequence": 24.1,
       "levelCap": 26,
       "badge": {
         "de": "Reliktorden",
